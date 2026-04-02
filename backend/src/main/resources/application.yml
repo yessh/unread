@@ -41,6 +41,14 @@ spring:
     deserialization:
       fail-on-unknown-properties: false
 
+  # Spring AI - Gemini Configuration
+  ai:
+    google:
+      gemini:
+        api-key: ${GEMINI_API_KEY:your-gemini-api-key}
+        project-id: ${GEMINI_PROJECT_ID:}
+        model: gemini-2.0-flash
+
 # Server Configuration
 server:
   port: 8080

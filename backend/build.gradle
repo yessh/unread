@@ -33,6 +33,12 @@ dependencies {
     implementation 'com.fasterxml.jackson.core:jackson-databind'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 
+    // Spring AI - Gemini
+    implementation 'org.springframework.ai:spring-ai-google-gemini-spring-boot-starter:1.0.0'
+
+    // JSONB support for PostgreSQL
+    implementation 'io.hypersistence:hypersistence-utils-hibernate-63:3.7.3'
+
     // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
