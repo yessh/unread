@@ -1,6 +1,6 @@
 import type { AiAnalysisResponse, ConversationSummary, KeywordExtraction, ParticipantAnalysis } from './types'
 
-const BASE_URL = '/api'
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080/api'
 
 export class ApiError extends Error {
   constructor(
@@ -33,6 +33,7 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
 // 전체 분석 API
 export async function requestFullAnalysis(req: {
   session_id: number
+  messages?: Array<{ sender: string; content: string; timestamp: string }>
   start_time?: string
   end_time?: string
   keywords?: string[]
@@ -41,6 +42,7 @@ export async function requestFullAnalysis(req: {
     method: 'POST',
     body: JSON.stringify({
       session_id: req.session_id,
+      messages: req.messages,
       start_time: req.start_time,
       end_time: req.end_time,
       keywords: req.keywords || [],
@@ -76,7 +78,7 @@ export async function summarizeConversation(req: {
 
 // 참여자 분석 API
 export async function analyzeParticipants(
-  sessionId: number,
+  _sessionId: number,
 ): Promise<ParticipantAnalysis[]> {
   return apiFetch<ParticipantAnalysis[]>('/analysis/analyze-participants', {
     method: 'POST',

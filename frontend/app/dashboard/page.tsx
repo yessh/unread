@@ -9,6 +9,7 @@ import { ParticipantShareChart } from '@/components/charts/ParticipantShareChart
 import { KeywordInput } from '@/components/keywords/KeywordInput'
 import { KeywordResultList } from '@/components/keywords/KeywordResultList'
 import { ParticipantCardGrid } from '@/components/participants/ParticipantCardGrid'
+import { DateRangeSummarizer } from '@/components/dashboard/DateRangeSummarizer'
 import { useAnalysis } from '@/context/AnalysisContext'
 import { buildHourlyData, buildParticipantData } from '@/lib/chartUtils'
 import type { KeywordTag } from '@/lib/types'
@@ -61,6 +62,28 @@ export default function DashboardPage() {
     return null // 리디렉션 중
   }
 
+  if (!analysisResult.conversation_summary) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-surface-base">
+        <div className="text-center space-y-4 px-4">
+          <div className="text-4xl">⚠️</div>
+          <h2 className="text-xl font-bold text-content-primary">AI 분석 실패</h2>
+          <p className="text-content-secondary max-w-md">
+            {analysisResult.error_message?.includes('429')
+              ? 'Gemini API 요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.'
+              : analysisResult.error_message || '알 수 없는 오류가 발생했습니다.'}
+          </p>
+          <button
+            onClick={() => router.push('/upload')}
+            className="mt-4 rounded-lg bg-accent-primary px-6 py-2 text-white hover:opacity-90"
+          >
+            다시 업로드
+          </button>
+        </div>
+      </main>
+    )
+  }
+
   return (
     <main className="min-h-screen bg-surface-base">
       {/* 헤더 */}
@@ -77,13 +100,15 @@ export default function DashboardPage() {
       <section className="px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl space-y-12">
           {/* 1. 대화 요약 */}
-          <div>
-            <h2 className="mb-6 text-2xl font-bold text-content-primary">1️⃣ 대화 요약</h2>
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-content-primary">1️⃣ 대화 요약</h2>
             <SummaryCard
               summary={analysisResult.conversation_summary}
               roomName={analysisResult.room_name}
               analysisTimestamp={analysisResult.analysis_timestamp}
             />
+            <h3 className="text-lg font-semibold text-content-secondary">기간별 요약</h3>
+            <DateRangeSummarizer />
           </div>
 
           {/* 2. 통찰 배너 */}

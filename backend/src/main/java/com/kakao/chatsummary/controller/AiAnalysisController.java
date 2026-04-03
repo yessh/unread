@@ -9,7 +9,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -64,11 +66,23 @@ public class AiAnalysisController {
     @PostMapping("/full-analysis")
     public ResponseEntity<AiAnalysisResponseDto> fullAnalysis(
             @RequestBody FullAnalysisRequest request) {
-        List<ChatMessage> messages = messageRepository.findBySessionId(request.getSessionId());
+        List<ChatMessage> messages;
+        if (request.getMessages() != null && !request.getMessages().isEmpty()) {
+            messages = request.getMessages().stream()
+                    .map(m -> ChatMessage.builder()
+                            .sessionId(request.getSessionId())
+                            .senderName(m.getSender())
+                            .messageContent(m.getContent())
+                            .messageTime(LocalDateTime.parse(m.getTimestamp()))
+                            .build())
+                    .collect(Collectors.toList());
+        } else {
+            messages = messageRepository.findBySessionId(request.getSessionId());
+        }
 
         AiAnalysisResponseDto result = aiService.analyzeConversation(
                 request.getSessionId(),
-                null, // roomName을 얻으려면 ChatSession 조회 필요
+                null,
                 messages,
                 request.getStartTime(),
                 request.getEndTime(),

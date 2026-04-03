@@ -1,5 +1,7 @@
 package com.kakao.chatsummary.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kakao.chatsummary.dto.*;
 import com.kakao.chatsummary.entity.ChatMessage;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +18,7 @@ import java.util.stream.Collectors;
 public class GeminiAiService {
 
     private final ChatClient chatClient;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public GeminiAiService(ChatClient chatClient) {
         this.chatClient = chatClient;
@@ -27,14 +30,21 @@ public class GeminiAiService {
     public ConversationSummaryDto summarizeConversation(List<ChatMessage> messages,
                                                         LocalDateTime startTime,
                                                         LocalDateTime endTime) {
-        List<ChatMessage> filteredMessages = messages.stream()
-                .filter(m -> !m.getMessageTime().isBefore(startTime) &&
-                           !m.getMessageTime().isAfter(endTime))
-                .collect(Collectors.toList());
+        List<ChatMessage> filteredMessages = (startTime == null || endTime == null)
+                ? new ArrayList<>(messages)
+                : messages.stream()
+                        .filter(m -> !m.getMessageTime().isBefore(startTime) &&
+                                   !m.getMessageTime().isAfter(endTime))
+                        .collect(Collectors.toList());
+
+        LocalDateTime effectiveStart = startTime != null ? startTime
+                : (filteredMessages.isEmpty() ? LocalDateTime.now() : filteredMessages.get(0).getMessageTime());
+        LocalDateTime effectiveEnd = endTime != null ? endTime
+                : (filteredMessages.isEmpty() ? LocalDateTime.now() : filteredMessages.get(filteredMessages.size() - 1).getMessageTime());
 
         if (filteredMessages.isEmpty()) {
             return ConversationSummaryDto.builder()
-                    .period(startTime + " ~ " + endTime)
+                    .period(effectiveStart + " ~ " + effectiveEnd)
                     .summary("해당 기간에 메시지가 없습니다.")
                     .mainTopics(Collections.emptyList())
                     .messageCount(0)
@@ -58,15 +68,15 @@ public class GeminiAiService {
                   "summary": "요약 내용",
                   "main_topics": ["주제1", "주제2", "주제3"]
                 }
-                """, startTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-                   endTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                """, effectiveStart.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                   effectiveEnd.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
                    conversationText);
 
-        String response = chatClient.prompt(prompt).call().getContent();
+        String response = chatClient.prompt(prompt).call().content();
         Map<String, Object> result = parseJsonResponse(response);
 
         return ConversationSummaryDto.builder()
-                .period(startTime + " ~ " + endTime)
+                .period(effectiveStart + " ~ " + effectiveEnd)
                 .summary((String) result.getOrDefault("summary", "분석 실패"))
                 .mainTopics((List<String>) result.getOrDefault("main_topics", Collections.emptyList()))
                 .messageCount(filteredMessages.size())
@@ -114,7 +124,7 @@ public class GeminiAiService {
                     }
                     """, keyword, formatMessagesForAi(relevantMessages), keyword);
 
-            String response = chatClient.prompt(prompt).call().getContent();
+            String response = chatClient.prompt(prompt).call().content();
             Map<String, Object> result = parseJsonResponse(response);
 
             @SuppressWarnings("unchecked")
@@ -185,7 +195,7 @@ public class GeminiAiService {
                     }
                     """, participantName, conversationText);
 
-            String response = chatClient.prompt(prompt).call().getContent();
+            String response = chatClient.prompt(prompt).call().content();
             Map<String, Object> result = parseJsonResponse(response);
 
             @SuppressWarnings("unchecked")
@@ -289,18 +299,13 @@ public class GeminiAiService {
      */
     private Map<String, Object> parseJsonResponse(String jsonResponse) {
         try {
-            // JSON 마크다운 블록 제거
             String cleanedJson = jsonResponse
-                    .replaceAll("```json", "")
+                    .replaceAll("(?s)```json\\s*", "")
                     .replaceAll("```", "")
                     .trim();
-
-            // 간단한 JSON 파싱 (실제 프로젝트에서는 ObjectMapper 사용 권장)
-            Map<String, Object> result = new HashMap<>();
-            // 여기서는 기본값 반환 (실제 JSON 파싱은 Jackson 또는 Gson 사용)
-            return result;
+            return objectMapper.readValue(cleanedJson, new TypeReference<Map<String, Object>>() {});
         } catch (Exception e) {
-            log.error("Failed to parse AI response as JSON", e);
+            log.error("Failed to parse AI response as JSON: {}", jsonResponse, e);
             return new HashMap<>();
         }
     }

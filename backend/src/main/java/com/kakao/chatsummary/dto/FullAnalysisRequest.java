@@ -18,6 +18,9 @@ public class FullAnalysisRequest {
     @JsonProperty("session_id")
     private Long sessionId;
 
+    @JsonProperty("messages")
+    private List<ParsedMessageDto> messages;
+
     @JsonProperty("start_time")
     private LocalDateTime startTime;
 

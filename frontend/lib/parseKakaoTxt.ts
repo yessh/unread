@@ -9,20 +9,25 @@ export async function parseKakaoTxt(file: File): Promise<ParsedMessage[]> {
     const zip = new JSZip()
     const zipContent = await zip.loadAsync(file)
 
-    // .txt 파일 찾기
-    let txtContent = ''
-    for (const [filename, fileObj] of Object.entries(zipContent.files)) {
-      if (filename.endsWith('.txt') && !fileObj.dir) {
-        txtContent = await fileObj.async('text')
-        break
-      }
-    }
+    // 모든 .txt 파일 찾기
+    const txtEntries = Object.entries(zipContent.files).filter(
+      ([filename, fileObj]) => filename.endsWith('.txt') && !fileObj.dir
+    )
 
-    if (!txtContent) {
+    if (txtEntries.length === 0) {
       throw new Error('ZIP 파일에서 .txt 파일을 찾을 수 없습니다')
     }
 
-    return parseTextContent(txtContent)
+    const allMessages: ParsedMessage[] = []
+    for (const [, fileObj] of txtEntries) {
+      const txtContent = await fileObj.async('text')
+      allMessages.push(...parseTextContent(txtContent))
+    }
+
+    // 시간순 정렬 (여러 파일 병합 시 순서 보장)
+    allMessages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())
+
+    return allMessages
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`카카오톡 파일 파싱 실패: ${error.message}`)

@@ -12,10 +12,9 @@ spring:
   # JPA Configuration
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: none
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQL10Dialect
         format_sql: true
         use_sql_comments: true
     show-sql: false
@@ -41,19 +40,23 @@ spring:
     deserialization:
       fail-on-unknown-properties: false
 
-  # Spring AI - Gemini Configuration
+  # Spring AI - Gemini via OpenAI-compatible endpoint
   ai:
-    google:
-      gemini:
-        api-key: ${GEMINI_API_KEY:your-gemini-api-key}
-        project-id: ${GEMINI_PROJECT_ID:}
-        model: gemini-2.0-flash
+    openai:
+      api-key: ${GEMINI_API_KEY:your-gemini-api-key}
+      base-url: https://generativelanguage.googleapis.com/v1beta/openai
+      chat:
+        options:
+          model: gemini-2.5-flash
 
 # Server Configuration
 server:
   port: 8080
   servlet:
     context-path: /api
+  tomcat:
+    max-http-form-post-size: -1
+    max-swallow-size: -1
 
 # Logging Configuration
 logging:

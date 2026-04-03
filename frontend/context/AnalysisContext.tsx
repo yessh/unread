@@ -117,10 +117,25 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 
       dispatch({ type: 'SET_UPLOAD_STATE', payload: { status: 'analyzing', progress: 50 } })
 
-      // 전체 분석 요청
-      const result = await requestFullAnalysis({
+      // 전체 분석 요청 (파싱된 메시지 포함)
+      const pad = (n: number) => String(n).padStart(2, '0')
+      const fmtTimestamp = (d: Date) =>
+        `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`
+
+      const MAX_MESSAGES = 500
+      const sampled = messages.length > MAX_MESSAGES
+        ? messages.slice(messages.length - MAX_MESSAGES)
+        : messages
+      const payload = {
         session_id: sessionId,
-      })
+        messages: sampled.map((m) => ({
+          sender: m.sender,
+          content: m.content,
+          timestamp: fmtTimestamp(m.timestamp),
+        })),
+      }
+      console.log('[분석 요청] 전체 메시지:', messages.length, '/ 전송:', sampled.length)
+      const result = await requestFullAnalysis(payload)
 
       dispatch({ type: 'SET_ANALYSIS_RESULT', payload: result })
       dispatch({ type: 'SET_UPLOAD_STATE', payload: { status: 'done', progress: 100 } })
@@ -131,6 +146,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
         sessionStorage.setItem('parsedMessages', JSON.stringify(messages))
       }
     } catch (error) {
+      console.error('[분석 실패]', error)
       const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다'
       dispatch({ type: 'SET_UPLOAD_STATE', payload: { status: 'error', progress: 0, errorMessage } })
     }

@@ -6,10 +6,17 @@ plugins {
 
 group = 'com.kakao'
 version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '17'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
 
 repositories {
     mavenCentral()
+    maven { url 'https://repo.spring.io/milestone' }
+    maven { url 'https://repo.spring.io/snapshot' }
 }
 
 dependencies {
@@ -33,8 +40,8 @@ dependencies {
     implementation 'com.fasterxml.jackson.core:jackson-databind'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 
-    // Spring AI - Gemini
-    implementation 'org.springframework.ai:spring-ai-google-gemini-spring-boot-starter:1.0.0'
+    // Spring AI - OpenAI (Gemini OpenAI-compatible endpoint)
+    implementation 'org.springframework.ai:spring-ai-openai-spring-boot-starter:1.0.0-M6'
 
     // JSONB support for PostgreSQL
     implementation 'io.hypersistence:hypersistence-utils-hibernate-63:3.7.3'
