@@ -1,0 +1,28 @@
+# ========================
+# macOS
+# ========================
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# ========================
+# IDE
+# ========================
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.classpath
+.project
+.settings/
+
+# ========================
+# 환경변수 및 시크릿
+# ========================
+.env
+.env.local
+.env.*.local
+*.pem
+secrets.*
