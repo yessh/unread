@@ -31,7 +31,6 @@ spring:
     google:
       gemini:
         api-key: ${GEMINI_API_KEY}
-        project-id: ${GEMINI_PROJECT_ID}
         model: gemini-2.0-flash
 ```
 
@@ -201,7 +200,9 @@ Content-Type: application/json
 backend/
 ├── src/main/java/com/kakao/chatsummary/
 │   ├── config/
-│   │   └── AiConfig.java                    # Spring AI 설정
+│   │   ├── AiConfig.java                    # Spring AI 설정
+│   │   ├── SecurityConfig.java              # Spring Security 설정
+│   │   └── WebMvcConfig.java               # CORS / Web MVC 설정
 │   ├── controller/
 │   │   └── AiAnalysisController.java        # AI 분석 API 엔드포인트
 │   ├── service/
@@ -219,10 +220,12 @@ backend/
 │   │   ├── ChatSession.java                 # 세션 엔티티
 │   │   ├── ChatSummary.java                 # 요약 엔티티
 │   │   └── User.java                        # 사용자 엔티티
-│   └── repository/
-│       ├── ChatMessageRepository.java       # 메시지 저장소
-│       ├── ChatSessionRepository.java       # 세션 저장소
-│       └── UserRepository.java              # 사용자 저장소
+│   ├── repository/
+│   │   ├── ChatMessageRepository.java       # 메시지 저장소
+│   │   ├── ChatSessionRepository.java       # 세션 저장소
+│   │   └── UserRepository.java              # 사용자 저장소
+│   └── util/
+│       └── KakaoTalkMessageParser.java      # 카카오톡 .txt 파서
 └── src/main/resources/
     ├── application.yml                      # Spring Boot 설정
     └── schema.sql                           # DB 스키마
@@ -252,7 +255,8 @@ backend/
 
 ## 다음 단계
 
-1. Frontend API 클라이언트 구현
+1. ~~Frontend API 클라이언트 구현~~ (완료: `frontend/lib/api.ts`)
 2. 사용자 인증 (JWT) 통합
-3. 파일 업로드 및 파싱 처리
-4. 분석 결과 저장 및 조회 기능
+3. ~~파일 업로드 및 파싱 처리~~ (완료: `frontend/lib/parseKakaoTxt.ts`, `parseCsv.ts`)
+4. 파일 업로드 백엔드 API 구현 (`POST /api/chat/upload`)
+5. 분석 결과 저장 및 조회 기능
