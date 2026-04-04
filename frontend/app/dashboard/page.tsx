@@ -78,12 +78,11 @@ export default function DashboardPage() {
         <div className="mx-auto flex max-w-7xl items-start justify-between">
           <div>
             <h1 className="mb-1 text-3xl font-bold text-content-primary">{roomName}</h1>
-            <p className="text-sm text-content-secondary">
-              메시지 {parsedMessages.length.toLocaleString()}개
-              {oldestTime && latestTime && (
-                <> &middot; {formatDate(oldestTime)} ~ {formatDate(latestTime)}</>
-              )}
-            </p>
+            {oldestTime && latestTime && (
+              <p className="text-sm text-content-secondary">
+                {formatDate(oldestTime)} ~ {formatDate(latestTime)}
+              </p>
+            )}
           </div>
           <button
             onClick={handleReset}
@@ -91,6 +90,34 @@ export default function DashboardPage() {
           >
             다시 업로드
           </button>
+        </div>
+      </section>
+
+      {/* 총계 stat 카드 */}
+      <section className="border-b border-surface-elevated bg-surface-card px-4 py-6 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="flex flex-wrap gap-8">
+            <div>
+              <div className="text-3xl font-bold text-accent-primary">
+                {parsedMessages.length.toLocaleString()}
+              </div>
+              <div className="mt-1 text-xs text-content-secondary">총 메시지</div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold text-accent-secondary">
+                {new Set(parsedMessages.map((m) => m.sender)).size.toLocaleString()}
+              </div>
+              <div className="mt-1 text-xs text-content-secondary">참여자</div>
+            </div>
+            {oldestTime && latestTime && (
+              <div>
+                <div className="text-3xl font-bold text-content-primary">
+                  {Math.ceil((latestTime.getTime() - oldestTime.getTime()) / (1000 * 60 * 60 * 24)).toLocaleString()}
+                </div>
+                <div className="mt-1 text-xs text-content-secondary">일간 기록</div>
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
