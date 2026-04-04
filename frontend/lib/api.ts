@@ -75,12 +75,15 @@ export async function summarizeConversation(req: {
   })
 }
 
-// 참여자 분석 API
-export async function analyzeParticipants(
-  _sessionId: number,
-): Promise<ParticipantAnalysis[]> {
-  return apiFetch<ParticipantAnalysis[]>('/analysis/analyze-participants', {
+// 단일 참여자 분석 API (온디맨드, 내용만 전달)
+export async function analyzeParticipant(req: {
+  participant_name: string
+  messages: string[] // content only
+  total_messages: number
+}): Promise<ParticipantAnalysis> {
+  return apiFetch<ParticipantAnalysis>('/analysis/analyze-participant', {
     method: 'POST',
+    body: JSON.stringify(req),
   })
 }
 

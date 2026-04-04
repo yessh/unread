@@ -65,6 +65,19 @@ public class AiAnalysisController {
     }
 
     /**
+     * 단일 참여자 분석 (온디맨드)
+     */
+    @PostMapping("/analyze-participant")
+    public ResponseEntity<ParticipantAnalysisDto> analyzeParticipant(
+            @RequestBody SingleParticipantAnalysisRequest request) {
+        ParticipantAnalysisDto result = aiService.analyzeParticipant(
+                request.getParticipantName(),
+                request.getMessages(),
+                request.getTotalMessages());
+        return ResponseEntity.ok(result);
+    }
+
+    /**
      * 전체 분석 (요약 + 키워드 + 참여자 분석)
      */
     @PostMapping("/full-analysis")

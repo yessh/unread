@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Badge } from '@/components/common/Badge'
 import { getChartColor, getInitials } from '@/lib/chartUtils'
 import type { ParticipantAnalysis } from '@/lib/types'
@@ -8,6 +9,7 @@ interface ParticipantCardProps {
 }
 
 export function ParticipantCard({ participant, colorIndex }: ParticipantCardProps) {
+  const [expanded, setExpanded] = useState(false)
   const bgColor = getChartColor(colorIndex)
   const initials = getInitials(participant.name)
 
@@ -35,9 +37,15 @@ export function ParticipantCard({ participant, colorIndex }: ParticipantCardProp
       <div className="border-t border-surface-elevated pt-4">
         {/* 성격 요약 */}
         <div className="mb-4">
-          <p className="text-sm text-content-primary line-clamp-3">
+          <p className={`text-sm text-content-primary transition-all duration-300 ${expanded ? '' : 'line-clamp-3'}`}>
             {participant.personality_summary}
           </p>
+          <button
+            onClick={() => setExpanded((v) => !v)}
+            className="mt-1 text-xs font-medium text-accent-primary hover:underline"
+          >
+            {expanded ? '접기' : '더보기'}
+          </button>
         </div>
 
         {/* 말투 태그들 */}

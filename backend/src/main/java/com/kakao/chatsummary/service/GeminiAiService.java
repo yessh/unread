@@ -221,6 +221,60 @@ public class GeminiAiService {
     }
 
     /**
+     * 단일 참여자 분석 (메시지 내용만 전달, 토큰 절감)
+     */
+    public ParticipantAnalysisDto analyzeParticipant(String name, List<String> messages, int totalMessages) {
+        String conversationText = String.join("\n", messages);
+
+        String prompt = String.format("""
+                다음은 '%s'이(가) 보낸 카카오톡 메시지들입니다.
+
+                메시지:
+                %s
+
+                이 사람의 말투, 성격, 특징을 분석해주세요.
+
+                응답 형식:
+                {
+                  "personality_summary": "성격 요약 (1-2문장)",
+                  "communication_style": "의사소통 방식",
+                  "key_characteristics": ["특징1", "특징2", "특징3"],
+                  "response_tone": "응답 톤 (친근함/진지함/유머러스함 등)",
+                  "linguistic_features": {
+                    "sentence_length": "짧음/중간/김",
+                    "formality": "존댓말/반말/자유로움",
+                    "expression_style": "감정 표현 방식"
+                  },
+                  "confidence_score": 0.85
+                }
+                """, name, conversationText);
+
+        String response = chatClient.prompt(prompt).call().content();
+        Map<String, Object> result = parseJsonResponse(response);
+
+        @SuppressWarnings("unchecked")
+        List<String> characteristics = (List<String>) result.getOrDefault("key_characteristics", Collections.emptyList());
+        @SuppressWarnings("unchecked")
+        Map<String, String> linguisticFeatures = (Map<String, String>) result.getOrDefault("linguistic_features", new HashMap<>());
+
+        int msgCount = messages.size();
+        double percentage = totalMessages > 0 ? (double) msgCount / totalMessages * 100 : 0;
+
+        return ParticipantAnalysisDto.builder()
+                .name(name)
+                .personalitySummary((String) result.getOrDefault("personality_summary", ""))
+                .communicationStyle((String) result.getOrDefault("communication_style", ""))
+                .keyCharacteristics(characteristics)
+                .messageCount(msgCount)
+                .messagePercentage(percentage)
+                .emojiUsageFrequency(0) // 내용만 전달받으므로 이모지 별도 집계 불가
+                .responseTone((String) result.getOrDefault("response_tone", ""))
+                .linguisticFeatures(linguisticFeatures)
+                .confidenceScore(((Number) result.getOrDefault("confidence_score", 0.0)).doubleValue())
+                .build();
+    }
+
+    /**
      * 전체 분석 (요약 + 키워드 + 참여자 분석)
      */
     public AiAnalysisResponseDto analyzeConversation(Long sessionId,

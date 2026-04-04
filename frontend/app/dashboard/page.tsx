@@ -7,6 +7,7 @@ import { MonthlyFrequencyChart } from '@/components/charts/MonthlyFrequencyChart
 import { ParticipantShareChart } from '@/components/charts/ParticipantShareChart'
 import { Badge } from '@/components/common/Badge'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
+import { ParticipantAnalysisSection } from '@/components/participants/ParticipantAnalysisSection'
 import { useAnalysis } from '@/context/AnalysisContext'
 import { buildHourlyData, buildMonthlyData, buildParticipantDataFromMessages } from '@/lib/chartUtils'
 
@@ -190,6 +191,17 @@ export default function DashboardPage() {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* 3. 참여자 성격 분석 */}
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-2xl font-bold text-content-primary">참여자 성격 분석</h2>
+              <p className="mt-1 text-sm text-content-secondary">
+                분석할 참여자를 선택하세요. 선택할 때만 AI 분석을 요청합니다.
+              </p>
+            </div>
+            <ParticipantAnalysisSection parsedMessages={parsedMessages} />
           </div>
 
         </div>
