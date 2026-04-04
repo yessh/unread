@@ -19,10 +19,10 @@ export function ParticipantShareChart({ data }: ParticipantShareChartProps) {
     <div className="card">
       <h3 className="mb-6 text-lg font-semibold text-content-primary">참여자별 메시지 비율</h3>
       <ResponsiveContainer width="100%" height={300}>
-        <BarChart data={truncatedData} layout="vertical">
+        <BarChart data={truncatedData} layout="vertical" margin={{ top: 5, right: 55, left: 5, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#252535" />
           <XAxis type="number" stroke="#a0a0b8" tick={{ fontSize: 12 }} />
-          <YAxis dataKey="displayName" width={100} stroke="#a0a0b8" tick={{ fontSize: 12 }} />
+          <YAxis type="category" dataKey="displayName" width={100} stroke="#a0a0b8" tick={{ fontSize: 12 }} />
           <Tooltip
             contentStyle={{
               backgroundColor: '#1a1a24',
@@ -30,8 +30,8 @@ export function ParticipantShareChart({ data }: ParticipantShareChartProps) {
               borderRadius: '8px',
               color: '#f1f1f5',
             }}
-            formatter={(value: number, name: string) => [
-              `${value}개 (${data[truncatedData.findIndex((d) => d.displayName === (value as any))].percentage}%)`,
+            formatter={(value: number, _name: string, props: any) => [
+              `${value}개 (${props.payload.percentage}%)`,
               '메시지',
             ]}
           />
