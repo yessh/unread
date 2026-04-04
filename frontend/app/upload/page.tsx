@@ -8,16 +8,16 @@ import { useAnalysis } from '@/context/AnalysisContext'
 
 export default function UploadPage() {
   const router = useRouter()
-  const { uploadState, uploadAndAnalyze, analysisResult } = useAnalysis()
+  const { uploadState, uploadFile, parsedMessages } = useAnalysis()
 
   useEffect(() => {
-    if (uploadState.status === 'done' && analysisResult) {
+    if (uploadState.status === 'done' && parsedMessages) {
       const timer = setTimeout(() => {
         router.push('/dashboard')
-      }, 1000)
+      }, 500)
       return () => clearTimeout(timer)
     }
-  }, [uploadState.status, analysisResult, router])
+  }, [uploadState.status, parsedMessages, router])
 
   return (
     <main className="min-h-screen bg-surface-base">
@@ -26,7 +26,7 @@ export default function UploadPage() {
         <div className="mx-auto max-w-4xl">
           <h1 className="mb-2 text-4xl font-bold text-content-primary">카카오톡 분석</h1>
           <p className="text-lg text-content-secondary">
-            대화 기록을 업로드하고 AI가 자동으로 분석해드립니다
+            대화 기록을 업로드하면 원하는 시간대를 선택해 요약할 수 있습니다
           </p>
         </div>
       </section>
@@ -34,12 +34,9 @@ export default function UploadPage() {
       {/* 메인 콘텐츠 */}
       <section className="px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl">
-          {/* 드롭존 */}
           <div className="mb-12 animate-slide-up">
-            <DropZone onFileDrop={uploadAndAnalyze} uploadState={uploadState} />
+            <DropZone onFileDrop={uploadFile} uploadState={uploadState} />
           </div>
-
-          {/* 가이드 */}
           <FileTypeGuide />
         </div>
       </section>

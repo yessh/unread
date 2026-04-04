@@ -28,7 +28,18 @@ public class AiAnalysisController {
     @PostMapping("/summarize")
     public ResponseEntity<ConversationSummaryDto> summarizeConversation(
             @RequestBody SummarizeRequest request) {
-        List<ChatMessage> messages = messageRepository.findBySessionId(request.getSessionId());
+        List<ChatMessage> messages;
+        if (request.getMessages() != null && !request.getMessages().isEmpty()) {
+            messages = request.getMessages().stream()
+                    .map(m -> ChatMessage.builder()
+                            .senderName(m.getSender())
+                            .messageContent(m.getContent())
+                            .messageTime(LocalDateTime.now())
+                            .build())
+                    .collect(Collectors.toList());
+        } else {
+            messages = messageRepository.findBySessionId(request.getSessionId());
+        }
         ConversationSummaryDto result = aiService.summarizeConversation(
                 messages,
                 request.getStartTime(),

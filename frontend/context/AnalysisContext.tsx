@@ -1,16 +1,17 @@
 'use client'
 
 import { createContext, useContext, useReducer, ReactNode, useCallback } from 'react'
-import type { AiAnalysisResponse, KeywordExtraction, KeywordTag, ParsedMessage, UploadState } from '@/lib/types'
+import type { ConversationSummary, KeywordExtraction, KeywordTag, ParsedMessage, UploadState } from '@/lib/types'
 import { parseKakaoTxt } from '@/lib/parseKakaoTxt'
 import { parseCsv } from '@/lib/parseCsv'
-import { requestFullAnalysis, extractKeywords as extractKeywordsApi } from '@/lib/api'
+import { summarizeConversation as summarizeApi, extractKeywords as extractKeywordsApi } from '@/lib/api'
 
 interface AnalysisState {
   parsedMessages: ParsedMessage[] | null
   sessionId: number | null
   roomName: string | null
-  analysisResult: AiAnalysisResponse | null
+  summaryResult: ConversationSummary | null
+  summaryHours: number | null
   uploadState: UploadState
   activeKeywords: KeywordTag[]
   keywordResults: KeywordExtraction[] | null
@@ -19,7 +20,7 @@ interface AnalysisState {
 type AnalysisAction =
   | { type: 'SET_PARSED_MESSAGES'; payload: { messages: ParsedMessage[]; roomName: string } }
   | { type: 'SET_SESSION_ID'; payload: number }
-  | { type: 'SET_ANALYSIS_RESULT'; payload: AiAnalysisResponse }
+  | { type: 'SET_SUMMARY_RESULT'; payload: { result: ConversationSummary; hours: number } }
   | { type: 'SET_UPLOAD_STATE'; payload: Partial<UploadState> }
   | { type: 'ADD_KEYWORD'; payload: KeywordTag }
   | { type: 'REMOVE_KEYWORD'; payload: string }
@@ -27,7 +28,8 @@ type AnalysisAction =
   | { type: 'RESET' }
 
 interface AnalysisContextType extends AnalysisState {
-  uploadAndAnalyze: (file: File) => Promise<void>
+  uploadFile: (file: File) => Promise<void>
+  summarizeLastHours: (hours: number) => Promise<void>
   addKeyword: (text: string) => void
   removeKeyword: (id: string) => void
   extractKeywords: (keywords: string[]) => Promise<void>
@@ -38,7 +40,8 @@ const initialState: AnalysisState = {
   parsedMessages: null,
   sessionId: null,
   roomName: null,
-  analysisResult: null,
+  summaryResult: null,
+  summaryHours: null,
   uploadState: { status: 'idle', progress: 0 },
   activeKeywords: [],
   keywordResults: null,
@@ -54,8 +57,8 @@ function reducer(state: AnalysisState, action: AnalysisAction): AnalysisState {
       }
     case 'SET_SESSION_ID':
       return { ...state, sessionId: action.payload }
-    case 'SET_ANALYSIS_RESULT':
-      return { ...state, analysisResult: action.payload }
+    case 'SET_SUMMARY_RESULT':
+      return { ...state, summaryResult: action.payload.result, summaryHours: action.payload.hours }
     case 'SET_UPLOAD_STATE':
       return { ...state, uploadState: { ...state.uploadState, ...action.payload } }
     case 'ADD_KEYWORD': {
@@ -73,10 +76,7 @@ function reducer(state: AnalysisState, action: AnalysisAction): AnalysisState {
     case 'SET_KEYWORD_RESULTS':
       return { ...state, keywordResults: action.payload }
     case 'RESET':
-      return {
-        ...initialState,
-        uploadState: { status: 'idle', progress: 0 },
-      }
+      return { ...initialState, uploadState: { status: 'idle', progress: 0 } }
     default:
       return state
   }
@@ -87,11 +87,11 @@ const AnalysisContext = createContext<AnalysisContextType | undefined>(undefined
 export function AnalysisProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState)
 
-  const uploadAndAnalyze = useCallback(async (file: File) => {
+  // 파일 업로드: 파싱만 하고 대시보드로 이동 (AI 호출 없음)
+  const uploadFile = useCallback(async (file: File) => {
     try {
-      dispatch({ type: 'SET_UPLOAD_STATE', payload: { status: 'parsing', progress: 10 } })
+      dispatch({ type: 'SET_UPLOAD_STATE', payload: { status: 'parsing', progress: 30 } })
 
-      // 파일 파싱
       let messages: ParsedMessage[]
       if (file.name.endsWith('.zip')) {
         messages = await parseKakaoTxt(file)
@@ -105,61 +105,47 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
         type: 'SET_PARSED_MESSAGES',
         payload: { messages, roomName: file.name.replace(/\.[^/.]+$/, '') },
       })
-      dispatch({ type: 'SET_UPLOAD_STATE', payload: { status: 'uploading', progress: 30 } })
 
-      // 백엔드 업로드 (추후 구현)
-      // const uploadResult = await uploadChatFile(file)
-      // dispatch({ type: 'SET_SESSION_ID', payload: uploadResult.session_id })
-
-      // 임시: mock session ID 사용
       const sessionId = parseInt(process.env.NEXT_PUBLIC_MOCK_SESSION_ID || '1', 10)
       dispatch({ type: 'SET_SESSION_ID', payload: sessionId })
 
-      dispatch({ type: 'SET_UPLOAD_STATE', payload: { status: 'analyzing', progress: 50 } })
-
-      // 전체 분석 요청 (파싱된 메시지 포함)
-      const pad = (n: number) => String(n).padStart(2, '0')
-      const fmtTimestamp = (d: Date) =>
-        `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`
-
-      const MAX_MESSAGES = 500
-      const sampled = messages.length > MAX_MESSAGES
-        ? messages.slice(messages.length - MAX_MESSAGES)
-        : messages
-      const payload = {
-        session_id: sessionId,
-        messages: sampled.map((m) => ({
-          sender: m.sender,
-          content: m.content,
-          timestamp: fmtTimestamp(m.timestamp),
-        })),
-      }
-      console.log('[분석 요청] 전체 메시지:', messages.length, '/ 전송:', sampled.length)
-      const result = await requestFullAnalysis(payload)
-
-      dispatch({ type: 'SET_ANALYSIS_RESULT', payload: result })
-      dispatch({ type: 'SET_UPLOAD_STATE', payload: { status: 'done', progress: 100 } })
-
-      // sessionStorage에 저장 (새로고침 시 유지)
+      // sessionStorage에 저장
       if (typeof window !== 'undefined') {
-        sessionStorage.setItem('analysisResult', JSON.stringify(result))
         sessionStorage.setItem('parsedMessages', JSON.stringify(messages))
+        sessionStorage.setItem('roomName', file.name.replace(/\.[^/.]+$/, ''))
       }
+
+      dispatch({ type: 'SET_UPLOAD_STATE', payload: { status: 'done', progress: 100 } })
     } catch (error) {
-      console.error('[분석 실패]', error)
+      console.error('[파싱 실패]', error)
       const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다'
       dispatch({ type: 'SET_UPLOAD_STATE', payload: { status: 'error', progress: 0, errorMessage } })
     }
   }, [])
 
+  // 최근 N시간 대화 요약 요청
+  const summarizeLastHours = useCallback(async (hours: number) => {
+    if (!state.parsedMessages || !state.sessionId) return
+
+    const latestTime = Math.max(...state.parsedMessages.map((m) => m.timestamp.getTime()))
+    const cutoff = latestTime - hours * 60 * 60 * 1000
+    const filtered = state.parsedMessages.filter((m) => m.timestamp.getTime() >= cutoff)
+
+    if (filtered.length === 0) {
+      throw new Error(`최근 ${hours}시간 내 메시지가 없습니다.`)
+    }
+
+    const messages = filtered.map((m) => ({ sender: m.sender, content: m.content }))
+    console.log(`[요약 요청] ${hours}시간 전 ~ 최신 / 메시지 수: ${filtered.length}`)
+
+    const result = await summarizeApi({ session_id: state.sessionId, messages })
+    dispatch({ type: 'SET_SUMMARY_RESULT', payload: { result, hours } })
+  }, [state.parsedMessages, state.sessionId])
+
   const extractKeywords = useCallback(async (keywords: string[]) => {
     if (!state.sessionId || keywords.length === 0) return
-
     try {
-      const results = await extractKeywordsApi({
-        session_id: state.sessionId,
-        keywords,
-      })
+      const results = await extractKeywordsApi({ session_id: state.sessionId, keywords })
       dispatch({ type: 'SET_KEYWORD_RESULTS', payload: results })
     } catch (error) {
       console.error('키워드 추출 실패:', error)
@@ -167,11 +153,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
   }, [state.sessionId])
 
   const addKeyword = useCallback((text: string) => {
-    const newTag: KeywordTag = {
-      id: Date.now().toString(),
-      text,
-    }
-    dispatch({ type: 'ADD_KEYWORD', payload: newTag })
+    dispatch({ type: 'ADD_KEYWORD', payload: { id: Date.now().toString(), text } })
   }, [])
 
   const removeKeyword = useCallback((id: string) => {
@@ -181,25 +163,27 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
   const resetAnalysis = useCallback(() => {
     dispatch({ type: 'RESET' })
     if (typeof window !== 'undefined') {
-      sessionStorage.removeItem('analysisResult')
       sessionStorage.removeItem('parsedMessages')
+      sessionStorage.removeItem('roomName')
     }
   }, [])
 
   // 페이지 로드 시 sessionStorage에서 복원
-  if (typeof window !== 'undefined' && !state.analysisResult) {
-    const savedResult = sessionStorage.getItem('analysisResult')
+  if (typeof window !== 'undefined' && !state.parsedMessages) {
     const savedMessages = sessionStorage.getItem('parsedMessages')
-    if (savedResult) {
+    const savedRoomName = sessionStorage.getItem('roomName')
+    if (savedMessages) {
       try {
-        dispatch({ type: 'SET_ANALYSIS_RESULT', payload: JSON.parse(savedResult) })
-        if (savedMessages) {
-          const messages = JSON.parse(savedMessages).map((m: any) => ({
-            ...m,
-            timestamp: new Date(m.timestamp),
-          }))
-          dispatch({ type: 'SET_PARSED_MESSAGES', payload: { messages, roomName: 'Restored' } })
-        }
+        const messages = JSON.parse(savedMessages).map((m: ParsedMessage & { timestamp: string }) => ({
+          ...m,
+          timestamp: new Date(m.timestamp),
+        }))
+        dispatch({
+          type: 'SET_PARSED_MESSAGES',
+          payload: { messages, roomName: savedRoomName || 'Restored' },
+        })
+        const sessionId = parseInt(process.env.NEXT_PUBLIC_MOCK_SESSION_ID || '1', 10)
+        dispatch({ type: 'SET_SESSION_ID', payload: sessionId })
       } catch {
         // 파싱 실패 시 무시
       }
@@ -208,7 +192,8 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 
   const value: AnalysisContextType = {
     ...state,
-    uploadAndAnalyze,
+    uploadFile,
+    summarizeLastHours,
     addKeyword,
     removeKeyword,
     extractKeywords,

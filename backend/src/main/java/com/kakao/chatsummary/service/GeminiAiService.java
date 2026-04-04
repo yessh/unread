@@ -287,8 +287,7 @@ public class GeminiAiService {
      */
     private String formatMessagesForAi(List<ChatMessage> messages) {
         return messages.stream()
-                .map(m -> String.format("[%s] %s: %s",
-                        m.getMessageTime().format(DateTimeFormatter.ISO_LOCAL_TIME),
+                .map(m -> String.format("%s: %s",
                         m.getSenderName(),
                         m.getMessageContent()))
                 .collect(Collectors.joining("\n"));

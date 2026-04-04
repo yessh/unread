@@ -64,11 +64,10 @@ export async function extractKeywords(req: {
   })
 }
 
-// 기간별 요약 API
+// 기간별 요약 API (messages를 직접 전달)
 export async function summarizeConversation(req: {
   session_id: number
-  start_time?: string
-  end_time?: string
+  messages: Array<{ sender: string; content: string }>
 }): Promise<ConversationSummary> {
   return apiFetch<ConversationSummary>('/analysis/summarize', {
     method: 'POST',

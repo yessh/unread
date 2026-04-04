@@ -31,6 +31,21 @@ export function buildParticipantData(analyses: ParticipantAnalysis[]): Participa
     .sort((a, b) => b.count - a.count)
 }
 
+export function buildParticipantDataFromMessages(messages: ParsedMessage[]): ParticipantChartData[] {
+  const counts: Record<string, number> = {}
+  for (const m of messages) {
+    counts[m.sender] = (counts[m.sender] || 0) + 1
+  }
+  const total = messages.length
+  return Object.entries(counts)
+    .map(([name, count]) => ({
+      name,
+      count,
+      percentage: Math.round((count / total) * 1000) / 10,
+    }))
+    .sort((a, b) => b.count - a.count)
+}
+
 export function splitWithHighlight(
   text: string,
   keywords: string[],
