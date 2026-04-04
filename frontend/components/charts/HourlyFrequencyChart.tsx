@@ -1,6 +1,6 @@
 'use client'
 
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { AreaChart, Area, XAxis, CartesianGrid, ResponsiveContainer } from 'recharts'
 import type { HourlyChartData } from '@/lib/types'
 
 interface HourlyFrequencyChartProps {
@@ -21,16 +21,7 @@ export function HourlyFrequencyChart({ data }: HourlyFrequencyChartProps) {
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="#252535" />
           <XAxis dataKey="hour" stroke="#a0a0b8" tick={{ fontSize: 12 }} />
-          <YAxis stroke="#a0a0b8" tick={{ fontSize: 12 }} />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: '#1a1a24',
-              border: '1px solid #252535',
-              borderRadius: '8px',
-              color: '#f1f1f5',
-            }}
-            cursor={{ stroke: 'rgba(124, 106, 247, 0.4)', strokeWidth: 1 }}
-          />
+
           <Area
             type="monotone"
             dataKey="count"

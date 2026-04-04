@@ -74,6 +74,11 @@ export interface HourlyChartData {
   count: number
 }
 
+export interface MonthlyChartData {
+  month: string
+  count: number
+}
+
 export interface ParticipantChartData {
   name: string
   count: number

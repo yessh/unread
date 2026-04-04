@@ -1,4 +1,4 @@
-import type { HourlyChartData, ParticipantAnalysis, ParticipantChartData, ParsedMessage } from './types'
+import type { HourlyChartData, MonthlyChartData, ParticipantAnalysis, ParticipantChartData, ParsedMessage } from './types'
 
 export function buildHourlyData(messages: ParsedMessage[]): HourlyChartData[] {
   const hourCounts: Record<number, number> = {}
@@ -14,11 +14,32 @@ export function buildHourlyData(messages: ParsedMessage[]): HourlyChartData[] {
     hourCounts[hour]++
   }
 
-  // 차트 데이터 변환
+  const total = messages.length || 1
+
+  // 차트 데이터 변환 (비율 %)
   return Array.from({ length: 24 }, (_, i) => ({
     hour: `${i.toString().padStart(2, '0')}시`,
-    count: hourCounts[i],
+    count: Math.round((hourCounts[i] / total) * 1000) / 10,
   }))
+}
+
+export function buildMonthlyData(messages: ParsedMessage[]): MonthlyChartData[] {
+  const monthCounts: Record<string, number> = {}
+
+  for (const msg of messages) {
+    const d = msg.timestamp
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    monthCounts[key] = (monthCounts[key] || 0) + 1
+  }
+
+  const total = messages.length || 1
+
+  return Object.entries(monthCounts)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, count]) => {
+      const [year, month] = key.split('-')
+      return { month: `${year}.${month}`, count: Math.round((count / total) * 1000) / 10 }
+    })
 }
 
 export function buildParticipantData(analyses: ParticipantAnalysis[]): ParticipantChartData[] {

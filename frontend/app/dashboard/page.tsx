@@ -3,11 +3,12 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { HourlyFrequencyChart } from '@/components/charts/HourlyFrequencyChart'
+import { MonthlyFrequencyChart } from '@/components/charts/MonthlyFrequencyChart'
 import { ParticipantShareChart } from '@/components/charts/ParticipantShareChart'
 import { Badge } from '@/components/common/Badge'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 import { useAnalysis } from '@/context/AnalysisContext'
-import { buildHourlyData, buildParticipantDataFromMessages } from '@/lib/chartUtils'
+import { buildHourlyData, buildMonthlyData, buildParticipantDataFromMessages } from '@/lib/chartUtils'
 
 const HOUR_OPTIONS = [1, 2, 3, 4, 5]
 
@@ -26,6 +27,11 @@ export default function DashboardPage() {
   const hourlyData = useMemo(() => {
     if (!parsedMessages) return []
     return buildHourlyData(parsedMessages)
+  }, [parsedMessages])
+
+  const monthlyData = useMemo(() => {
+    if (!parsedMessages) return []
+    return buildMonthlyData(parsedMessages)
   }, [parsedMessages])
 
   const participantData = useMemo(() => {
@@ -178,6 +184,11 @@ export default function DashboardPage() {
             <div className="grid gap-6 lg:grid-cols-2">
               <HourlyFrequencyChart data={hourlyData} />
               <ParticipantShareChart data={participantData} />
+              {monthlyData.length > 1 && (
+                <div className="lg:col-span-2">
+                  <MonthlyFrequencyChart data={monthlyData} />
+                </div>
+              )}
             </div>
           </div>
 
