@@ -10,7 +10,7 @@ import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 import { ParticipantAnalysisSection } from '@/components/participants/ParticipantAnalysisSection'
 import { TimeRangeSlider } from '@/components/dashboard/TimeRangeSlider'
 import { useAnalysis } from '@/context/AnalysisContext'
-import { buildHourlyData, buildMonthlyData, buildParticipantDataFromMessages } from '@/lib/chartUtils'
+import { buildHourlyData, buildWeeklyData, buildParticipantDataFromMessages } from '@/lib/chartUtils'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -31,7 +31,7 @@ export default function DashboardPage() {
 
   const monthlyData = useMemo(() => {
     if (!parsedMessages) return []
-    return buildMonthlyData(parsedMessages)
+    return buildWeeklyData(parsedMessages)
   }, [parsedMessages])
 
   const participantData = useMemo(() => {

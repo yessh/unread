@@ -10,7 +10,7 @@ interface MonthlyFrequencyChartProps {
 export function MonthlyFrequencyChart({ data }: MonthlyFrequencyChartProps) {
   return (
     <div className="card">
-      <h3 className="mb-6 text-lg font-semibold text-content-primary">월별 채팅 빈도</h3>
+      <h3 className="mb-6 text-lg font-semibold text-content-primary">채팅 빈도</h3>
       <ResponsiveContainer width="100%" height={300}>
         <AreaChart data={data}>
           <defs>
@@ -24,7 +24,7 @@ export function MonthlyFrequencyChart({ data }: MonthlyFrequencyChartProps) {
             dataKey="month"
             stroke="#a0a0b8"
             tick={{ fontSize: 11 }}
-            interval="preserveStartEnd"
+            interval={Math.max(0, Math.floor(data.length / 10))}
           />
 
           <Area

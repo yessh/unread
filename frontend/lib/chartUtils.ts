@@ -23,22 +23,26 @@ export function buildHourlyData(messages: ParsedMessage[]): HourlyChartData[] {
   }))
 }
 
-export function buildMonthlyData(messages: ParsedMessage[]): MonthlyChartData[] {
-  const monthCounts: Record<string, number> = {}
+export function buildWeeklyData(messages: ParsedMessage[]): MonthlyChartData[] {
+  const weekCounts: Record<string, number> = {}
 
   for (const msg of messages) {
-    const d = msg.timestamp
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-    monthCounts[key] = (monthCounts[key] || 0) + 1
+    const d = new Date(msg.timestamp)
+    const day = d.getDay() // 0=Sun, 1=Mon...
+    const diff = day === 0 ? -6 : 1 - day // 월요일로 맞춤
+    d.setDate(d.getDate() + diff)
+    d.setHours(0, 0, 0, 0)
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    weekCounts[key] = (weekCounts[key] || 0) + 1
   }
 
   const total = messages.length || 1
 
-  return Object.entries(monthCounts)
+  return Object.entries(weekCounts)
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([key, count]) => {
-      const [year, month] = key.split('-')
-      return { month: `${year}.${month}`, count: Math.round((count / total) * 1000) / 10 }
+      const [, month, day] = key.split('-')
+      return { month: `${month}/${day}`, count: Math.round((count / total) * 1000) / 10 }
     })
 }
 
