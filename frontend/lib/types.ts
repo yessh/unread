@@ -85,6 +85,11 @@ export interface ParticipantChartData {
   percentage: number
 }
 
+export interface DayOfWeekChartData {
+  day: string
+  count: number
+}
+
 // 키워드 입력 상태
 
 export interface KeywordTag {

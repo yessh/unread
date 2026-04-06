@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { HourlyFrequencyChart } from '@/components/charts/HourlyFrequencyChart'
+import { DayOfWeekFrequencyChart } from '@/components/charts/DayOfWeekFrequencyChart'
 import { MonthlyFrequencyChart } from '@/components/charts/MonthlyFrequencyChart'
 import { ParticipantShareChart } from '@/components/charts/ParticipantShareChart'
 import { Badge } from '@/components/common/Badge'
@@ -10,7 +11,7 @@ import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 import { ParticipantAnalysisSection } from '@/components/participants/ParticipantAnalysisSection'
 import { TimeRangeSlider } from '@/components/dashboard/TimeRangeSlider'
 import { useAnalysis } from '@/context/AnalysisContext'
-import { buildHourlyData, buildWeeklyData, buildParticipantDataFromMessages } from '@/lib/chartUtils'
+import { buildHourlyData, buildWeeklyData, buildParticipantDataFromMessages, buildDayOfWeekData } from '@/lib/chartUtils'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -32,6 +33,11 @@ export default function DashboardPage() {
   const monthlyData = useMemo(() => {
     if (!parsedMessages) return []
     return buildWeeklyData(parsedMessages)
+  }, [parsedMessages])
+
+  const dayOfWeekData = useMemo(() => {
+    if (!parsedMessages) return []
+    return buildDayOfWeekData(parsedMessages)
   }, [parsedMessages])
 
   const participantData = useMemo(() => {
@@ -197,6 +203,7 @@ export default function DashboardPage() {
             <h2 className="mb-6 text-2xl font-bold text-content-primary">채팅 통계</h2>
             <div className="grid gap-6 lg:grid-cols-2">
               <HourlyFrequencyChart data={hourlyData} />
+              <DayOfWeekFrequencyChart data={dayOfWeekData} />
               <ParticipantShareChart data={participantData} />
               {monthlyData.length > 1 && (
                 <div className="lg:col-span-2">

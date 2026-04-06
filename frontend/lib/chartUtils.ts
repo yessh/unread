@@ -1,4 +1,4 @@
-import type { HourlyChartData, MonthlyChartData, ParticipantAnalysis, ParticipantChartData, ParsedMessage } from './types'
+import type { DayOfWeekChartData, HourlyChartData, MonthlyChartData, ParticipantAnalysis, ParticipantChartData, ParsedMessage } from './types'
 
 export function buildHourlyData(messages: ParsedMessage[]): HourlyChartData[] {
   const hourCounts: Record<number, number> = {}
@@ -44,6 +44,21 @@ export function buildWeeklyData(messages: ParsedMessage[]): MonthlyChartData[] {
       const [, month, day] = key.split('-')
       return { month: `${month}/${day}`, count: Math.round((count / total) * 1000) / 10 }
     })
+}
+
+export function buildDayOfWeekData(messages: ParsedMessage[]): DayOfWeekChartData[] {
+  const labels = ['일', '월', '화', '수', '목', '금', '토']
+  const counts = Array(7).fill(0)
+  for (const msg of messages) {
+    counts[msg.timestamp.getDay()]++
+  }
+  const total = messages.length || 1
+  // 월(1)~일(0) 순서로 반환
+  const ordered = [1, 2, 3, 4, 5, 6, 0]
+  return ordered.map((i) => ({
+    day: labels[i],
+    count: Math.round((counts[i] / total) * 1000) / 10,
+  }))
 }
 
 export function buildParticipantData(analyses: ParticipantAnalysis[]): ParticipantChartData[] {
