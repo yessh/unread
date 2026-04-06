@@ -122,7 +122,7 @@ async function parseWithEncoding(file: File, encoding: string): Promise<ParsedMe
           reject(error)
         }
       },
-      error: (error) => {
+      error: (error: { message: string }) => {
         reject(new Error(`CSV 파싱 실패: ${error.message}`))
       },
     })

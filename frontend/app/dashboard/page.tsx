@@ -8,14 +8,13 @@ import { ParticipantShareChart } from '@/components/charts/ParticipantShareChart
 import { Badge } from '@/components/common/Badge'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 import { ParticipantAnalysisSection } from '@/components/participants/ParticipantAnalysisSection'
+import { TimeRangeSlider } from '@/components/dashboard/TimeRangeSlider'
 import { useAnalysis } from '@/context/AnalysisContext'
 import { buildHourlyData, buildMonthlyData, buildParticipantDataFromMessages } from '@/lib/chartUtils'
 
-const HOUR_OPTIONS = [1, 2, 3, 4, 5]
-
 export default function DashboardPage() {
   const router = useRouter()
-  const { parsedMessages, roomName, summaryResult, summaryHours, summarizeLastHours, resetAnalysis } = useAnalysis()
+  const { parsedMessages, roomName, summaryResult, summaryHours, summarizeTimeRange, resetAnalysis } = useAnalysis()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -49,11 +48,11 @@ export default function DashboardPage() {
     }
   }, [parsedMessages])
 
-  const handleSummarize = async (hours: number) => {
+  const handleSummarize = async (startTime: Date, endTime: Date) => {
     setLoading(true)
     setError(null)
     try {
-      await summarizeLastHours(hours)
+      await summarizeTimeRange(startTime, endTime)
     } catch (e) {
       setError(e instanceof Error ? e.message : '요약 중 오류가 발생했습니다')
     } finally {
@@ -124,31 +123,18 @@ export default function DashboardPage() {
       <section className="px-4 py-10 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl space-y-12">
 
-          {/* 1. 최근 대화 요약 */}
+          {/* 1. 대화 요약 */}
           <div className="space-y-4">
             <h2 className="text-2xl font-bold text-content-primary">대화 요약</h2>
             <p className="text-sm text-content-secondary">
-              가장 최근 메시지 기준으로 몇 시간 전부터 요약할지 선택하세요.
+              범위를 조절해 요약할 시간대를 선택하세요.
             </p>
 
-            {/* 5개 버튼 */}
-            <div className="flex flex-wrap gap-3">
-              {HOUR_OPTIONS.map((h) => (
-                <button
-                  key={h}
-                  onClick={() => handleSummarize(h)}
-                  disabled={loading}
-                  className={`rounded-xl px-6 py-3 text-sm font-semibold transition
-                    ${summaryHours === h && summaryResult
-                      ? 'bg-accent-primary text-white shadow-lg shadow-accent-primary/30'
-                      : 'bg-surface-card text-content-primary hover:bg-surface-elevated border border-surface-elevated'
-                    }
-                    disabled:cursor-not-allowed disabled:opacity-50`}
-                >
-                  최근 {h}시간
-                </button>
-              ))}
-            </div>
+            <TimeRangeSlider
+              parsedMessages={parsedMessages}
+              onSummarize={handleSummarize}
+              loading={loading}
+            />
 
             {/* 로딩 */}
             {loading && (
@@ -181,7 +167,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="text-center">
                     <div className="text-lg font-bold text-content-primary">{summaryHours}시간</div>
-                    <div className="mt-1 text-xs text-content-secondary">분석 범위</div>
+                    <div className="mt-1 text-xs text-content-secondary">선택 범위</div>
                   </div>
                 </div>
 

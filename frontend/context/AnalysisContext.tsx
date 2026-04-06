@@ -30,6 +30,7 @@ type AnalysisAction =
 interface AnalysisContextType extends AnalysisState {
   uploadFile: (file: File) => Promise<void>
   summarizeLastHours: (hours: number) => Promise<void>
+  summarizeTimeRange: (startTime: Date, endTime: Date) => Promise<void>
   addKeyword: (text: string) => void
   removeKeyword: (id: string) => void
   extractKeywords: (keywords: string[]) => Promise<void>
@@ -142,6 +143,23 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'SET_SUMMARY_RESULT', payload: { result, hours } })
   }, [state.parsedMessages, state.sessionId])
 
+  const summarizeTimeRange = useCallback(async (startTime: Date, endTime: Date) => {
+    if (!state.parsedMessages || !state.sessionId) return
+
+    const filtered = state.parsedMessages.filter(
+      (m) => m.timestamp >= startTime && m.timestamp < endTime,
+    )
+
+    if (filtered.length === 0) {
+      throw new Error('선택한 시간대에 메시지가 없습니다.')
+    }
+
+    const messages = filtered.map((m) => ({ sender: m.sender, content: m.content }))
+    const result = await summarizeApi({ session_id: state.sessionId, messages })
+    const diffHours = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60))
+    dispatch({ type: 'SET_SUMMARY_RESULT', payload: { result, hours: diffHours } })
+  }, [state.parsedMessages, state.sessionId])
+
   const extractKeywords = useCallback(async (keywords: string[]) => {
     if (!state.sessionId || keywords.length === 0) return
     try {
@@ -194,6 +212,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
     ...state,
     uploadFile,
     summarizeLastHours,
+    summarizeTimeRange,
     addKeyword,
     removeKeyword,
     extractKeywords,
