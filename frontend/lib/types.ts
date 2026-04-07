@@ -7,10 +7,19 @@ export interface CoreMessage {
   relevance: string
 }
 
+export interface ConversationTreeNode {
+  id: string
+  title: string
+  description: string
+  parent_ids: string[]
+  child_ids: string[]
+}
+
 export interface ConversationSummary {
   period: string
   summary: string
   main_topics: string[]
+  tree_nodes?: ConversationTreeNode[]
   message_count: number
   participant_count: number
 }

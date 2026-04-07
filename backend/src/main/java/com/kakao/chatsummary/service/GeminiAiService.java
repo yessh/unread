@@ -60,14 +60,27 @@ public class GeminiAiService {
                 대화 내용:
                 %s
 
-                아래 항목을 JSON 형식으로 분석해주세요:
-                1. 전체 대화 흐름 요약 (한 문단)
-                2. 주요 주제 (3-5개, 배열)
+                이 대화의 주제 흐름을 트리/그래프 구조로 분석해주세요.
 
-                응답 형식:
+                규칙:
+                - 대화가 순차적으로 한 주제에서 다음으로 이어지면 선형 연결 (child_ids에 다음 노드 1개)
+                - 여러 주제가 동시에 병행 진행되면 분기 (하나의 노드 child_ids에 여러 노드)
+                - 분기된 주제들이 다시 하나로 합쳐지면 merge (여러 parent_ids를 가진 노드)
+                - 루트 노드는 parent_ids가 빈 배열 []
+                - 노드 개수는 3~8개로 제한
+
+                응답 형식 (JSON만, 코드블록 없이):
                 {
-                  "summary": "요약 내용",
-                  "main_topics": ["주제1", "주제2", "주제3"]
+                  "summary": "전체 대화 한 줄 요약",
+                  "nodes": [
+                    {
+                      "id": "1",
+                      "title": "주제 제목 (15자 이내)",
+                      "description": "해당 주제의 맥락과 주요 내용 설명 (2~4문장)",
+                      "parent_ids": [],
+                      "child_ids": ["2"]
+                    }
+                  ]
                 }
                 """, effectiveStart.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
                    effectiveEnd.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
@@ -76,10 +89,28 @@ public class GeminiAiService {
         String response = chatClient.prompt(prompt).call().content();
         Map<String, Object> result = parseJsonResponse(response);
 
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> rawNodes = (List<Map<String, Object>>) result.getOrDefault("nodes", Collections.emptyList());
+        List<ConversationSummaryDto.ConversationTreeNodeDto> treeNodes = rawNodes.stream()
+                .map(raw -> ConversationSummaryDto.ConversationTreeNodeDto.builder()
+                        .id((String) raw.get("id"))
+                        .title((String) raw.getOrDefault("title", ""))
+                        .description((String) raw.getOrDefault("description", ""))
+                        .parentIds((List<String>) raw.getOrDefault("parent_ids", Collections.emptyList()))
+                        .childIds((List<String>) raw.getOrDefault("child_ids", Collections.emptyList()))
+                        .build())
+                .collect(Collectors.toList());
+
+        @SuppressWarnings("unchecked")
+        List<String> mainTopics = treeNodes.stream()
+                .map(ConversationSummaryDto.ConversationTreeNodeDto::getTitle)
+                .collect(Collectors.toList());
+
         return ConversationSummaryDto.builder()
                 .period(effectiveStart + " ~ " + effectiveEnd)
                 .summary((String) result.getOrDefault("summary", "분석 실패"))
-                .mainTopics((List<String>) result.getOrDefault("main_topics", Collections.emptyList()))
+                .mainTopics(mainTopics)
+                .treeNodes(treeNodes)
                 .messageCount(filteredMessages.size())
                 .participantCount((int) filteredMessages.stream()
                         .map(ChatMessage::getSenderName)

@@ -23,9 +23,34 @@ public class ConversationSummaryDto {
     @JsonProperty("main_topics")
     private List<String> mainTopics;
 
+    @JsonProperty("tree_nodes")
+    private List<ConversationTreeNodeDto> treeNodes;
+
     @JsonProperty("message_count")
     private Integer messageCount;
 
     @JsonProperty("participant_count")
     private Integer participantCount;
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ConversationTreeNodeDto {
+
+        @JsonProperty("id")
+        private String id;
+
+        @JsonProperty("title")
+        private String title;
+
+        @JsonProperty("description")
+        private String description;
+
+        @JsonProperty("parent_ids")
+        private List<String> parentIds;
+
+        @JsonProperty("child_ids")
+        private List<String> childIds;
+    }
 }

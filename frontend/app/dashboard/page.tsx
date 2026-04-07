@@ -10,6 +10,7 @@ import { Badge } from '@/components/common/Badge'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 import { ParticipantAnalysisSection } from '@/components/participants/ParticipantAnalysisSection'
 import { TimeRangeSlider } from '@/components/dashboard/TimeRangeSlider'
+import { ConversationTreeView } from '@/components/dashboard/ConversationTreeView'
 import { useAnalysis } from '@/context/AnalysisContext'
 import { buildHourlyData, buildWeeklyData, buildParticipantDataFromMessages, buildDayOfWeekData } from '@/lib/chartUtils'
 
@@ -156,9 +157,9 @@ export default function DashboardPage() {
 
             {/* 요약 결과 */}
             {summaryResult && !loading && (
-              <div className="card space-y-5">
+              <div className="space-y-5">
                 {/* 통계 수치 */}
-                <div className="grid grid-cols-3 gap-4 border-b border-surface-elevated pb-5">
+                <div className="card grid grid-cols-3 gap-4">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-accent-primary">
                       {summaryResult.message_count.toLocaleString()}
@@ -177,22 +178,25 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                {/* 요약 텍스트 */}
-                <div>
-                  <h3 className="mb-2 font-semibold text-content-primary">요약</h3>
-                  <p className="text-sm leading-relaxed text-content-secondary">{summaryResult.summary}</p>
-                </div>
+                {/* 한 줄 요약 */}
+                {summaryResult.summary && (
+                  <p className="text-sm text-content-secondary">{summaryResult.summary}</p>
+                )}
 
-                {/* 주요 주제 */}
-                {summaryResult.main_topics.length > 0 && (
-                  <div>
-                    <h3 className="mb-2 font-semibold text-content-primary">주요 주제</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {summaryResult.main_topics.map((topic, idx) => (
-                        <Badge key={idx} variant="primary">{topic}</Badge>
-                      ))}
+                {/* 트리 뷰 */}
+                {summaryResult.tree_nodes && summaryResult.tree_nodes.length > 0 ? (
+                  <ConversationTreeView nodes={summaryResult.tree_nodes} />
+                ) : (
+                  summaryResult.main_topics.length > 0 && (
+                    <div className="card">
+                      <h3 className="mb-2 font-semibold text-content-primary">주요 주제</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {summaryResult.main_topics.map((topic, idx) => (
+                          <Badge key={idx} variant="primary">{topic}</Badge>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )
                 )}
               </div>
             )}
