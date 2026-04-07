@@ -1,3 +1,11 @@
+// 인증 타입
+export interface AuthUser {
+  id: number
+  email: string
+  username: string
+  provider: string
+}
+
 // 백엔드 응답 타입 (DTO 매핑)
 
 export interface CoreMessage {
