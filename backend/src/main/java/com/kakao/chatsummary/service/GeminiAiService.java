@@ -7,6 +7,7 @@ import com.kakao.chatsummary.entity.ChatMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -272,6 +273,38 @@ public class GeminiAiService {
                 .linguisticFeatures(linguisticFeatures)
                 .confidenceScore(((Number) result.getOrDefault("confidence_score", 0.0)).doubleValue())
                 .build();
+    }
+
+    /**
+     * 단일 참여자 분석 - SSE 스트리밍용
+     */
+    public Flux<String> analyzeParticipantStream(String name, List<String> messages, int totalMessages) {
+        String conversationText = String.join("\n", messages);
+
+        String prompt = String.format("""
+                다음은 '%s'이(가) 보낸 카카오톡 메시지들입니다.
+
+                메시지:
+                %s
+
+                이 사람의 말투, 성격, 특징을 분석해주세요.
+
+                응답 형식:
+                {
+                  "personality_summary": "성격 요약 (1-2문장)",
+                  "communication_style": "의사소통 방식",
+                  "key_characteristics": ["특징1", "특징2", "특징3"],
+                  "response_tone": "응답 톤 (친근함/진지함/유머러스함 등)",
+                  "linguistic_features": {
+                    "sentence_length": "짧음/중간/김",
+                    "formality": "존댓말/반말/자유로움",
+                    "expression_style": "감정 표현 방식"
+                  },
+                  "confidence_score": 0.85
+                }
+                """, name, conversationText);
+
+        return chatClient.prompt(prompt).stream().content();
     }
 
     /**

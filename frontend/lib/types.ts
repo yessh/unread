@@ -67,6 +67,8 @@ export interface UploadState {
   errorMessage?: string
 }
 
+export type StreamingStatus = 'idle' | 'streaming' | 'done' | 'error'
+
 // 차트용 데이터 타입
 
 export interface HourlyChartData {

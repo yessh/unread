@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
-import { analyzeParticipant } from '@/lib/api'
+import { useRef, useState } from 'react'
+import { analyzeParticipantStream } from '@/lib/api'
 import { ParticipantCard } from './ParticipantCard'
-import { LoadingSpinner } from '@/components/common/LoadingSpinner'
+import { ParticipantCardSkeleton } from './ParticipantCardSkeleton'
 import { getChartColor, getInitials } from '@/lib/chartUtils'
-import type { ParsedMessage, ParticipantAnalysis } from '@/lib/types'
+import type { ParsedMessage, ParticipantAnalysis, StreamingStatus } from '@/lib/types'
 
 interface ParticipantAnalysisSectionProps {
   parsedMessages: ParsedMessage[]
@@ -13,9 +13,13 @@ interface ParticipantAnalysisSectionProps {
 
 export function ParticipantAnalysisSection({ parsedMessages }: ParticipantAnalysisSectionProps) {
   const [selected, setSelected] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [streamingStatus, setStreamingStatus] = useState<StreamingStatus>('idle')
+  const [tokenCount, setTokenCount] = useState(0)
+  const [previewText, setPreviewText] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [cache, setCache] = useState<Record<string, ParticipantAnalysis>>({})
+  const cancelRef = useRef<(() => void) | null>(null)
+  const accumulatedRef = useRef('')
 
   // 참여자별 메시지 집계 (버튼 목록용)
   const participantStats = (() => {
@@ -28,30 +32,63 @@ export function ParticipantAnalysisSection({ parsedMessages }: ParticipantAnalys
       .map(([name, count]) => ({ name, count }))
   })()
 
-  const handleSelect = async (name: string) => {
+  const handleSelect = (name: string) => {
+    // 진행 중인 스트림 취소
+    cancelRef.current?.()
+    cancelRef.current = null
+
     setSelected(name)
     setError(null)
 
     if (cache[name]) return // 이미 분석된 경우
 
-    setLoading(true)
-    try {
-      const messages = parsedMessages
-        .filter((m) => m.sender === name)
-        .map((m) => m.content)
+    setStreamingStatus('streaming')
+    setTokenCount(0)
+    setPreviewText('')
+    accumulatedRef.current = ''
 
-      const result = await analyzeParticipant({
-        participant_name: name,
-        messages,
-        total_messages: parsedMessages.length,
-      })
+    const messages = parsedMessages
+      .filter((m) => m.sender === name)
+      .map((m) => m.content)
 
-      setCache((prev) => ({ ...prev, [name]: result }))
-    } catch (e) {
-      setError(e instanceof Error ? e.message : '분석 중 오류가 발생했습니다')
-    } finally {
-      setLoading(false)
-    }
+    const cancel = analyzeParticipantStream(
+      { participant_name: name, messages, total_messages: parsedMessages.length },
+      (chunk) => {
+        accumulatedRef.current += chunk
+        setTokenCount((n) => n + 1)
+        // personality_summary 값을 실시간으로 추출해서 표시
+        const match = accumulatedRef.current.match(/"personality_summary"\s*:\s*"((?:[^"\\]|\\.)*)"?/)
+        if (match) setPreviewText(match[1].replace(/\\"/g, '"'))
+      },
+      (fullText) => {
+        try {
+          const cleaned = fullText.replaceAll('```json', '').replaceAll('```', '').trim()
+          const parsed = JSON.parse(cleaned) as ParticipantAnalysis
+          const msgCount = messages.length
+          const pct = parsedMessages.length > 0 ? (msgCount / parsedMessages.length) * 100 : 0
+          setCache((prev) => ({
+            ...prev,
+            [name]: {
+              ...parsed,
+              name,
+              message_count: msgCount,
+              message_percentage: pct,
+              emoji_usage_frequency: parsed.emoji_usage_frequency ?? 0,
+            },
+          }))
+          setStreamingStatus('done')
+        } catch {
+          setError('분석 결과를 파싱하는 중 오류가 발생했습니다')
+          setStreamingStatus('error')
+        }
+      },
+      (err) => {
+        setError(err.message)
+        setStreamingStatus('error')
+      }
+    )
+
+    cancelRef.current = cancel
   }
 
   const colorIndexOf = (name: string) => participantStats.findIndex((p) => p.name === name)
@@ -70,7 +107,7 @@ export function ParticipantAnalysisSection({ parsedMessages }: ParticipantAnalys
             <button
               key={name}
               onClick={() => handleSelect(name)}
-              disabled={loading && selected === name}
+              disabled={streamingStatus === 'streaming' && selected === name}
               className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition border
                 ${isSelected
                   ? 'text-white shadow-lg border-transparent'
@@ -100,17 +137,22 @@ export function ParticipantAnalysisSection({ parsedMessages }: ParticipantAnalys
       {/* 분석 결과 영역 */}
       {selected && (
         <div className="mt-2">
-          {loading && (
-            <div className="flex justify-center py-10">
-              <LoadingSpinner message={`${selected}님을 분석하고 있습니다...`} />
+          {streamingStatus === 'streaming' && (
+            <div className="max-w-sm">
+              <ParticipantCardSkeleton
+                name={selected}
+                colorIndex={colorIndexOf(selected)}
+                tokenCount={tokenCount}
+                previewText={previewText}
+              />
             </div>
           )}
 
-          {error && !loading && (
+          {streamingStatus === 'error' && (
             <div className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-400">{error}</div>
           )}
 
-          {cache[selected] && !loading && (
+          {(streamingStatus === 'done' || streamingStatus === 'idle') && cache[selected] && (
             <div className="max-w-sm">
               <ParticipantCard
                 participant={cache[selected]}
