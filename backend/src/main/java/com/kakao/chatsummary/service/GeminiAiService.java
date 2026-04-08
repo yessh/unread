@@ -83,7 +83,9 @@ public class GeminiAiService {
                         {
                           "event": "약속/일정 내용 (없으면 생략)",
                           "location": "장소 (언급 없으면 null)",
-                          "time": "날짜/시각 (언급 없으면 null)"
+                          "time": "날짜/시각 (언급 없으면 null)",
+                          "attendees": ["이 약속에 참석하는 사람 이름 — 직접 메시지를 보낸 사람뿐 아니라 '○○도 온대', '○○ 데려올게' 등으로 언급된 사람도 포함"],
+                          "latecomers": ["이 약속에서 지각하거나 늦는다고 언급된 사람 이름"]
                         }
                       ],
                       "facts": [
@@ -96,6 +98,8 @@ public class GeminiAiService {
                   ]
                 }
                 - schedules: 해당 주제에서 약속·장소·시각이 언급된 경우만 포함. 없으면 빈 배열 []
+                - schedules[].attendees: 이 약속에 참석하는 사람 이름 목록. 메시지 발신자뿐 아니라 참석이 언급된 사람도 포함. 없으면 빈 배열 []
+                - schedules[].latecomers: 이 약속에서 지각·늦음이 언급된 사람 이름 목록. 없으면 빈 배열 []
                 - facts: 해당 주제의 대화 끝에 확인된 사실·합의·결론만 포함. 오가는 말 중 최종적으로 정해지거나 인정된 것만. 없으면 빈 배열 []
                 """, effectiveStart.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
                    effectiveEnd.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
@@ -111,11 +115,19 @@ public class GeminiAiService {
                     @SuppressWarnings("unchecked")
                     List<Map<String, Object>> rawSchedules = (List<Map<String, Object>>) raw.getOrDefault("schedules", Collections.emptyList());
                     List<ConversationSummaryDto.ScheduleDto> schedules = rawSchedules.stream()
-                            .map(s -> ConversationSummaryDto.ScheduleDto.builder()
-                                    .event((String) s.get("event"))
-                                    .location((String) s.get("location"))
-                                    .time((String) s.get("time"))
-                                    .build())
+                            .map(s -> {
+                                @SuppressWarnings("unchecked")
+                                List<String> attendees = (List<String>) s.getOrDefault("attendees", Collections.emptyList());
+                                @SuppressWarnings("unchecked")
+                                List<String> schedLatecomers = (List<String>) s.getOrDefault("latecomers", Collections.emptyList());
+                                return ConversationSummaryDto.ScheduleDto.builder()
+                                        .event((String) s.get("event"))
+                                        .location((String) s.get("location"))
+                                        .time((String) s.get("time"))
+                                        .attendees(attendees)
+                                        .latecomers(schedLatecomers)
+                                        .build();
+                            })
                             .collect(Collectors.toList());
                     @SuppressWarnings("unchecked")
                     List<Map<String, Object>> rawFacts = (List<Map<String, Object>>) raw.getOrDefault("facts", Collections.emptyList());
@@ -142,16 +154,19 @@ public class GeminiAiService {
                 .map(ConversationSummaryDto.ConversationTreeNodeDto::getTitle)
                 .collect(Collectors.toList());
 
+        List<String> participantNames = filteredMessages.stream()
+                .map(ChatMessage::getSenderName)
+                .distinct()
+                .collect(Collectors.toList());
+
         return ConversationSummaryDto.builder()
                 .period(effectiveStart + " ~ " + effectiveEnd)
                 .summary((String) result.getOrDefault("summary", "분석 실패"))
                 .mainTopics(mainTopics)
                 .treeNodes(treeNodes)
                 .messageCount(filteredMessages.size())
-                .participantCount((int) filteredMessages.stream()
-                        .map(ChatMessage::getSenderName)
-                        .distinct()
-                        .count())
+                .participantCount(participantNames.size())
+                .participants(participantNames)
                 .build();
     }
 

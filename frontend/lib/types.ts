@@ -19,6 +19,8 @@ export interface ScheduleInfo {
   event: string | null
   location: string | null
   time: string | null
+  attendees?: string[]
+  latecomers?: string[]
 }
 
 export interface FactInfo {
@@ -43,6 +45,7 @@ export interface ConversationSummary {
   tree_nodes?: ConversationTreeNode[]
   message_count: number
   participant_count: number
+  participants?: string[]
 }
 
 export interface KeywordExtraction {

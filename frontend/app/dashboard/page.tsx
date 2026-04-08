@@ -11,6 +11,7 @@ import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 import { ParticipantAnalysisSection } from '@/components/participants/ParticipantAnalysisSection'
 import { TimeRangeSlider } from '@/components/dashboard/TimeRangeSlider'
 import { ConversationTreeView } from '@/components/dashboard/ConversationTreeView'
+import { SummaryDigest } from '@/components/dashboard/SummaryDigest'
 import { useAnalysis } from '@/context/AnalysisContext'
 import { buildHourlyData, buildWeeklyData, buildParticipantDataFromMessages, buildDayOfWeekData } from '@/lib/chartUtils'
 
@@ -185,6 +186,9 @@ export default function DashboardPage() {
                     </div>
                   )
                 )}
+
+                {/* 최종 정리 */}
+                <SummaryDigest summaryResult={summaryResult} />
               </div>
             )}
           </div>

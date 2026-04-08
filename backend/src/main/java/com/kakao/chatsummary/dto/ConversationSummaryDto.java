@@ -32,6 +32,9 @@ public class ConversationSummaryDto {
     @JsonProperty("participant_count")
     private Integer participantCount;
 
+    @JsonProperty("participants")
+    private List<String> participants;
+
     @Getter
     @NoArgsConstructor
     @AllArgsConstructor
@@ -74,6 +77,12 @@ public class ConversationSummaryDto {
 
         @JsonProperty("time")
         private String time;
+
+        @JsonProperty("attendees")
+        private List<String> attendees;
+
+        @JsonProperty("latecomers")
+        private List<String> latecomers;
     }
 
     @Getter
