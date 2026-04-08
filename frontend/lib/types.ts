@@ -21,6 +21,11 @@ export interface ScheduleInfo {
   time: string | null
 }
 
+export interface FactInfo {
+  category: string
+  content: string
+}
+
 export interface ConversationTreeNode {
   id: string
   title: string
@@ -28,6 +33,7 @@ export interface ConversationTreeNode {
   parent_ids: string[]
   child_ids: string[]
   schedules?: ScheduleInfo[]
+  facts?: FactInfo[]
 }
 
 export interface ConversationSummary {

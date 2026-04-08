@@ -55,6 +55,9 @@ public class ConversationSummaryDto {
 
         @JsonProperty("schedules")
         private List<ScheduleDto> schedules;
+
+        @JsonProperty("facts")
+        private List<FactDto> facts;
     }
 
     @Getter
@@ -71,5 +74,18 @@ public class ConversationSummaryDto {
 
         @JsonProperty("time")
         private String time;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class FactDto {
+
+        @JsonProperty("category")
+        private String category;
+
+        @JsonProperty("content")
+        private String content;
     }
 }

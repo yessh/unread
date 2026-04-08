@@ -85,11 +85,18 @@ public class GeminiAiService {
                           "location": "장소 (언급 없으면 null)",
                           "time": "날짜/시각 (언급 없으면 null)"
                         }
+                      ],
+                      "facts": [
+                        {
+                          "category": "결론/합의/정보/미결 중 하나",
+                          "content": "해당 주제에서 확인되거나 정해진 최종 내용을 한 문장으로"
+                        }
                       ]
                     }
                   ]
                 }
                 - schedules: 해당 주제에서 약속·장소·시각이 언급된 경우만 포함. 없으면 빈 배열 []
+                - facts: 해당 주제의 대화 끝에 확인된 사실·합의·결론만 포함. 오가는 말 중 최종적으로 정해지거나 인정된 것만. 없으면 빈 배열 []
                 """, effectiveStart.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
                    effectiveEnd.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
                    conversationText);
@@ -110,6 +117,14 @@ public class GeminiAiService {
                                     .time((String) s.get("time"))
                                     .build())
                             .collect(Collectors.toList());
+                    @SuppressWarnings("unchecked")
+                    List<Map<String, Object>> rawFacts = (List<Map<String, Object>>) raw.getOrDefault("facts", Collections.emptyList());
+                    List<ConversationSummaryDto.FactDto> facts = rawFacts.stream()
+                            .map(f -> ConversationSummaryDto.FactDto.builder()
+                                    .category((String) f.get("category"))
+                                    .content((String) f.get("content"))
+                                    .build())
+                            .collect(Collectors.toList());
                     return ConversationSummaryDto.ConversationTreeNodeDto.builder()
                             .id((String) raw.get("id"))
                             .title((String) raw.getOrDefault("title", ""))
@@ -117,6 +132,7 @@ public class GeminiAiService {
                             .parentIds((List<String>) raw.getOrDefault("parent_ids", Collections.emptyList()))
                             .childIds((List<String>) raw.getOrDefault("child_ids", Collections.emptyList()))
                             .schedules(schedules)
+                            .facts(facts)
                             .build();
                 })
                 .collect(Collectors.toList());

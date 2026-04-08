@@ -1,7 +1,21 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import type { ConversationTreeNode, ScheduleInfo } from '@/lib/types'
+import type { ConversationTreeNode, ScheduleInfo, FactInfo } from '@/lib/types'
+
+const CATEGORY_STYLE: Record<string, string> = {
+  결론:   'bg-purple-900/40 text-purple-300',
+  합의:   'bg-green-900/40 text-green-300',
+  정보:   'bg-blue-900/40 text-blue-300',
+  미결:   'bg-yellow-900/40 text-yellow-300',
+}
+
+function CategoryBadge({ category }: { category: string }) {
+  const cls = CATEGORY_STYLE[category] ?? 'bg-surface-elevated text-content-secondary'
+  return (
+    <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${cls}`}>{category}</span>
+  )
+}
 
 interface ConversationTreeViewProps {
   nodes: ConversationTreeNode[]
@@ -209,6 +223,21 @@ export function ConversationTreeView({ nodes }: ConversationTreeViewProps) {
                           </span>
                         )}
                       </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 최종 정보 */}
+            {selectedNode.facts && selectedNode.facts.length > 0 && (
+              <div className="mt-5">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-accent-secondary">정리된 정보</p>
+                <div className="flex flex-col gap-2">
+                  {selectedNode.facts.map((f, i) => (
+                    <div key={i} className="flex items-start gap-3 rounded-lg border border-surface-elevated bg-surface-base px-4 py-3">
+                      <CategoryBadge category={f.category} />
+                      <p className="text-xs leading-relaxed text-content-secondary">{f.content}</p>
                     </div>
                   ))}
                 </div>
