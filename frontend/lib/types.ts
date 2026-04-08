@@ -15,12 +15,19 @@ export interface CoreMessage {
   relevance: string
 }
 
+export interface ScheduleInfo {
+  event: string | null
+  location: string | null
+  time: string | null
+}
+
 export interface ConversationTreeNode {
   id: string
   title: string
   description: string
   parent_ids: string[]
   child_ids: string[]
+  schedules?: ScheduleInfo[]
 }
 
 export interface ConversationSummary {

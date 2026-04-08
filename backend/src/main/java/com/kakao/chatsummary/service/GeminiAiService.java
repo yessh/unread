@@ -78,10 +78,18 @@ public class GeminiAiService {
                       "title": "주제 제목 (15자 이내)",
                       "description": "해당 주제의 맥락과 주요 내용 설명 (2~4문장)",
                       "parent_ids": [],
-                      "child_ids": ["2"]
+                      "child_ids": ["2"],
+                      "schedules": [
+                        {
+                          "event": "약속/일정 내용 (없으면 생략)",
+                          "location": "장소 (언급 없으면 null)",
+                          "time": "날짜/시각 (언급 없으면 null)"
+                        }
+                      ]
                     }
                   ]
                 }
+                - schedules: 해당 주제에서 약속·장소·시각이 언급된 경우만 포함. 없으면 빈 배열 []
                 """, effectiveStart.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
                    effectiveEnd.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
                    conversationText);
@@ -92,13 +100,25 @@ public class GeminiAiService {
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> rawNodes = (List<Map<String, Object>>) result.getOrDefault("nodes", Collections.emptyList());
         List<ConversationSummaryDto.ConversationTreeNodeDto> treeNodes = rawNodes.stream()
-                .map(raw -> ConversationSummaryDto.ConversationTreeNodeDto.builder()
-                        .id((String) raw.get("id"))
-                        .title((String) raw.getOrDefault("title", ""))
-                        .description((String) raw.getOrDefault("description", ""))
-                        .parentIds((List<String>) raw.getOrDefault("parent_ids", Collections.emptyList()))
-                        .childIds((List<String>) raw.getOrDefault("child_ids", Collections.emptyList()))
-                        .build())
+                .map(raw -> {
+                    @SuppressWarnings("unchecked")
+                    List<Map<String, Object>> rawSchedules = (List<Map<String, Object>>) raw.getOrDefault("schedules", Collections.emptyList());
+                    List<ConversationSummaryDto.ScheduleDto> schedules = rawSchedules.stream()
+                            .map(s -> ConversationSummaryDto.ScheduleDto.builder()
+                                    .event((String) s.get("event"))
+                                    .location((String) s.get("location"))
+                                    .time((String) s.get("time"))
+                                    .build())
+                            .collect(Collectors.toList());
+                    return ConversationSummaryDto.ConversationTreeNodeDto.builder()
+                            .id((String) raw.get("id"))
+                            .title((String) raw.getOrDefault("title", ""))
+                            .description((String) raw.getOrDefault("description", ""))
+                            .parentIds((List<String>) raw.getOrDefault("parent_ids", Collections.emptyList()))
+                            .childIds((List<String>) raw.getOrDefault("child_ids", Collections.emptyList()))
+                            .schedules(schedules)
+                            .build();
+                })
                 .collect(Collectors.toList());
 
         @SuppressWarnings("unchecked")

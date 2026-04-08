@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import type { ConversationTreeNode } from '@/lib/types'
+import type { ConversationTreeNode, ScheduleInfo } from '@/lib/types'
 
 interface ConversationTreeViewProps {
   nodes: ConversationTreeNode[]
@@ -181,11 +181,42 @@ export function ConversationTreeView({ nodes }: ConversationTreeViewProps) {
               <div className="h-3 w-3 rounded-full bg-accent-primary" />
               <h3 className="text-lg font-bold text-content-primary">{selectedNode.title}</h3>
             </div>
-            <p className="flex-1 overflow-y-auto text-sm leading-relaxed text-content-secondary">
+            <p className="text-sm leading-relaxed text-content-secondary">
               {selectedNode.description}
             </p>
+
+            {/* 일정 정보 */}
+            {selectedNode.schedules && selectedNode.schedules.length > 0 && (
+              <div className="mt-5">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-accent-primary">일정</p>
+                <div className="flex flex-col gap-2">
+                  {selectedNode.schedules.map((s, i) => (
+                    <div key={i} className="rounded-lg border border-surface-elevated bg-surface-base px-4 py-3">
+                      {s.event && (
+                        <p className="text-sm font-medium text-content-primary">{s.event}</p>
+                      )}
+                      <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
+                        {s.time && (
+                          <span className="flex items-center gap-1 text-xs text-content-secondary">
+                            <span className="text-accent-secondary">시각</span>
+                            {s.time}
+                          </span>
+                        )}
+                        {s.location && (
+                          <span className="flex items-center gap-1 text-xs text-content-secondary">
+                            <span className="text-accent-secondary">장소</span>
+                            {s.location}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* 연결 정보 */}
-            <div className="mt-4 border-t border-surface-elevated pt-4 text-xs text-content-secondary">
+            <div className="mt-auto border-t border-surface-elevated pt-4 text-xs text-content-secondary">
               {selectedNode.parent_ids.length > 0 && (
                 <span className="mr-4">
                   이전 주제:{' '}

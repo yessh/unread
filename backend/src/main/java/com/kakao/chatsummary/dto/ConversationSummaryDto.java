@@ -52,5 +52,24 @@ public class ConversationSummaryDto {
 
         @JsonProperty("child_ids")
         private List<String> childIds;
+
+        @JsonProperty("schedules")
+        private List<ScheduleDto> schedules;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ScheduleDto {
+
+        @JsonProperty("event")
+        private String event;
+
+        @JsonProperty("location")
+        private String location;
+
+        @JsonProperty("time")
+        private String time;
     }
 }
