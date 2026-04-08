@@ -3,14 +3,21 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
+import { useAnalysis } from '@/context/AnalysisContext'
 
 export function Navbar() {
   const { user, logout } = useAuth()
+  const { resetAnalysis } = useAnalysis()
   const router = useRouter()
 
   const handleLogout = async () => {
     await logout()
     router.push('/login')
+  }
+
+  const handleNewFile = () => {
+    resetAnalysis()
+    router.push('/upload')
   }
 
   return (
@@ -27,12 +34,12 @@ export function Navbar() {
           <div className="flex items-center gap-4">
             {user ? (
               <>
-                <Link
-                  href="/upload"
+                <button
+                  onClick={handleNewFile}
                   className="rounded-lg px-4 py-2 text-sm font-medium text-content-primary transition-colors hover:bg-surface-elevated"
                 >
                   새 파일 분석
-                </Link>
+                </button>
                 <div className="flex items-center gap-3">
                   <span className="text-sm text-content-secondary">{user.username}</span>
                   <button

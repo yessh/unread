@@ -16,7 +16,7 @@ import { buildHourlyData, buildWeeklyData, buildParticipantDataFromMessages, bui
 
 export default function DashboardPage() {
   const router = useRouter()
-  const { parsedMessages, roomName, summaryResult, summaryHours, summarizeTimeRange, resetAnalysis } = useAnalysis()
+  const { parsedMessages, roomName, summaryResult, summaryHours, summarizeTimeRange } = useAnalysis()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -67,11 +67,6 @@ export default function DashboardPage() {
     }
   }
 
-  const handleReset = () => {
-    resetAnalysis()
-    router.push('/upload')
-  }
-
   if (!parsedMessages) return null
 
   const formatDate = (d: Date) =>
@@ -81,21 +76,13 @@ export default function DashboardPage() {
     <main className="min-h-screen bg-surface-base">
       {/* 헤더 */}
       <section className="border-b border-surface-elevated bg-surface-card/50 px-4 py-10 backdrop-blur-sm sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-7xl items-start justify-between">
-          <div>
-            <h1 className="mb-1 text-3xl font-bold text-content-primary">{roomName}</h1>
-            {oldestTime && latestTime && (
-              <p className="text-sm text-content-secondary">
-                {formatDate(oldestTime)} ~ {formatDate(latestTime)}
-              </p>
-            )}
-          </div>
-          <button
-            onClick={handleReset}
-            className="rounded-lg border border-surface-elevated px-4 py-2 text-sm text-content-secondary hover:text-content-primary"
-          >
-            다시 업로드
-          </button>
+        <div className="mx-auto max-w-7xl">
+          <h1 className="mb-1 text-3xl font-bold text-content-primary">{roomName}</h1>
+          {oldestTime && latestTime && (
+            <p className="text-sm text-content-secondary">
+              {formatDate(oldestTime)} ~ {formatDate(latestTime)}
+            </p>
+          )}
         </div>
       </section>
 
