@@ -10,6 +10,13 @@ const CATEGORY_STYLE: Record<string, string> = {
   미결:   'bg-yellow-900/40 text-yellow-300',
 }
 
+function formatTime(time: string) {
+  const timePart = time.includes('T') ? time.split('T')[1] : time
+  const [h, m] = timePart.split(':').map(Number)
+  if (isNaN(h) || isNaN(m)) return time
+  return `${h}시 ${m}분`
+}
+
 function CategoryBadge({ category }: { category: string }) {
   const cls = CATEGORY_STYLE[category] ?? 'bg-surface-elevated text-content-secondary'
   return (
@@ -213,7 +220,7 @@ export function ConversationTreeView({ nodes }: ConversationTreeViewProps) {
                         {s.time && (
                           <span className="flex items-center gap-1 text-xs text-content-secondary">
                             <span className="text-accent-secondary">시각</span>
-                            {s.time}
+                            {formatTime(s.time)}
                           </span>
                         )}
                         {s.location && (

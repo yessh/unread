@@ -7,6 +7,13 @@ interface SummaryDigestProps {
   summaryResult: ConversationSummary
 }
 
+function formatTime(time: string) {
+  const timePart = time.includes('T') ? time.split('T')[1] : time
+  const [h, m] = timePart.split(':').map(Number)
+  if (isNaN(h) || isNaN(m)) return time
+  return `${h}시 ${m}분`
+}
+
 const STATUS_STYLE: Record<string, string> = {
   확정: 'bg-green-900/40 text-green-300',
   미정: 'bg-yellow-900/40 text-yellow-300',
@@ -200,7 +207,7 @@ export function SummaryDigest({ summaryResult }: SummaryDigestProps) {
                     {s.time && (
                       <span className="flex items-center gap-1.5 text-xs text-content-secondary">
                         <span className="text-accent-secondary font-medium">시각</span>
-                        {s.time}
+                        {formatTime(s.time)}
                       </span>
                     )}
                     {s.location && (
