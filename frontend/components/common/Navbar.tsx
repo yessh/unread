@@ -1,6 +1,18 @@
+'use client'
+
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/context/AuthContext'
 
 export function Navbar() {
+  const { user, logout } = useAuth()
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    await logout()
+    router.push('/login')
+  }
+
   return (
     <nav className="sticky top-0 z-40 border-b border-surface-elevated bg-surface-card/80 backdrop-blur-md">
       <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
@@ -13,12 +25,32 @@ export function Navbar() {
           </Link>
 
           <div className="flex items-center gap-4">
-            <Link
-              href="/upload"
-              className="rounded-lg px-4 py-2 text-sm font-medium text-content-primary transition-colors hover:bg-surface-elevated"
-            >
-              새 파일 분석
-            </Link>
+            {user ? (
+              <>
+                <Link
+                  href="/upload"
+                  className="rounded-lg px-4 py-2 text-sm font-medium text-content-primary transition-colors hover:bg-surface-elevated"
+                >
+                  새 파일 분석
+                </Link>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-content-secondary">{user.username}</span>
+                  <button
+                    onClick={handleLogout}
+                    className="rounded-lg px-3 py-1.5 text-sm text-content-tertiary transition-colors hover:bg-surface-elevated hover:text-content-primary"
+                  >
+                    로그아웃
+                  </button>
+                </div>
+              </>
+            ) : (
+              <Link
+                href="/login"
+                className="rounded-lg bg-accent-primary px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
+              >
+                로그인
+              </Link>
+            )}
           </div>
         </div>
       </div>

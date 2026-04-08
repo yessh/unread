@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Navbar } from '@/components/common/Navbar'
 import { AnalysisProvider } from '@/context/AnalysisContext'
+import { AuthProvider } from '@/context/AuthContext'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -19,10 +20,12 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body className="bg-surface-base text-content-primary">
-        <AnalysisProvider>
-          <Navbar />
-          {children}
-        </AnalysisProvider>
+        <AuthProvider>
+          <AnalysisProvider>
+            <Navbar />
+            {children}
+          </AnalysisProvider>
+        </AuthProvider>
       </body>
     </html>
   )

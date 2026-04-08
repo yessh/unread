@@ -23,8 +23,15 @@ spring:
   # Security Configuration
   security:
     jwt:
-      secret: your-secret-key-change-this-in-production
+      secret: ${JWT_SECRET:your-secret-key-must-be-at-least-32-characters-long}
       expiration: 86400000 # 24 hours in milliseconds
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope: email, profile
 
   # File Upload Configuration
   servlet:
@@ -48,6 +55,10 @@ spring:
       chat:
         options:
           model: gemini-2.5-flash
+
+# App Configuration
+app:
+  frontend-url: ${FRONTEND_URL:http://localhost:3000}
 
 # Server Configuration
 server:
