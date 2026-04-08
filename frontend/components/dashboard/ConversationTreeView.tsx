@@ -104,9 +104,9 @@ export function ConversationTreeView({ nodes }: ConversationTreeViewProps) {
   const PADDING = 24
 
   return (
-    <div className="flex h-[520px] gap-5">
-      {/* 트리 뷰 (왼쪽, 세로 스크롤) */}
-      <div className="w-80 shrink-0 overflow-auto rounded-xl border border-surface-elevated bg-surface-card p-3">
+    <div className="flex h-[780px] gap-5">
+      {/* 트리 뷰 (왼쪽, 스크롤바 숨김) */}
+      <div className="w-[45%] shrink-0 overflow-auto rounded-xl border border-surface-elevated bg-surface-card p-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <svg
           width={svgWidth + PADDING * 2}
           height={svgHeight + PADDING * 2}
@@ -188,7 +188,7 @@ export function ConversationTreeView({ nodes }: ConversationTreeViewProps) {
       </div>
 
       {/* 상세 내용 (오른쪽) */}
-      <div className="flex flex-1 flex-col rounded-xl border border-surface-elevated bg-surface-card p-6">
+      <div className="flex flex-1 flex-col overflow-auto rounded-xl border border-surface-elevated bg-surface-card p-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {selectedNode ? (
           <>
             <div className="mb-4 flex items-center gap-3">
