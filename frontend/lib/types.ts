@@ -15,6 +15,11 @@ export interface CoreMessage {
   relevance: string
 }
 
+export interface AttendeeEvidence {
+  name: string
+  messages: { sender: string; content: string }[]
+}
+
 export interface ScheduleInfo {
   event: string | null
   status?: string | null
@@ -22,6 +27,7 @@ export interface ScheduleInfo {
   time: string | null
   attendees?: string[]
   latecomers?: string[]
+  attendee_evidence?: AttendeeEvidence[]
 }
 
 export interface FactInfo {

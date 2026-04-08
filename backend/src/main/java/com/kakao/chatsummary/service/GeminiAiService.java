@@ -86,7 +86,15 @@ public class GeminiAiService {
                           "location": "장소 (언급 없으면 null)",
                           "time": "날짜/시각 (언급 없으면 null)",
                           "attendees": ["참석이 언급된 사람 이름 — '○○도 온대', '○○ 데려올게' 등 포함"],
-                          "latecomers": ["지각하거나 늦는다고 언급된 사람 이름"]
+                          "latecomers": ["지각하거나 늦는다고 언급된 사람 이름"],
+                          "attendee_evidence": [
+                            {
+                              "name": "참석자 이름",
+                              "messages": [
+                                {"sender": "발신자 이름", "content": "이 사람의 참석 여부를 알 수 있는 실제 메시지 내용"}
+                              ]
+                            }
+                          ]
                         }
                       ],
                       "facts": [
@@ -102,6 +110,7 @@ public class GeminiAiService {
                 - schedules[].status: 이 노드에서 해당 약속의 상태 — 확정/미정/취소/변경 중 하나
                 - schedules[].attendees: 참석이 언급된 사람 이름 목록. 없으면 빈 배열 []
                 - schedules[].latecomers: 이 약속에서 지각·늦음이 언급된 사람. 없으면 빈 배열 []
+                - schedules[].attendee_evidence: attendees에 포함된 각 사람별로, 그 사람이 참석한다고 판단한 근거가 된 실제 메시지 1~3개. 없으면 빈 배열 []
                 - facts: 해당 주제의 대화 끝에 확인된 사실·합의·결론만 포함. 오가는 말 중 최종적으로 정해지거나 인정된 것만. 없으면 빈 배열 []
                 """, effectiveStart.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
                    effectiveEnd.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
@@ -122,6 +131,24 @@ public class GeminiAiService {
                                 List<String> attendees = (List<String>) s.getOrDefault("attendees", Collections.emptyList());
                                 @SuppressWarnings("unchecked")
                                 List<String> schedLatecomers = (List<String>) s.getOrDefault("latecomers", Collections.emptyList());
+                                @SuppressWarnings("unchecked")
+                                List<Map<String, Object>> rawEvidence = (List<Map<String, Object>>) s.getOrDefault("attendee_evidence", Collections.emptyList());
+                                List<ConversationSummaryDto.AttendeeEvidenceDto> attendeeEvidence = rawEvidence.stream()
+                                        .map(ev -> {
+                                            @SuppressWarnings("unchecked")
+                                            List<Map<String, String>> rawMsgs = (List<Map<String, String>>) ev.getOrDefault("messages", Collections.emptyList());
+                                            List<ConversationSummaryDto.EvidenceMessageDto> evMsgs = rawMsgs.stream()
+                                                    .map(m -> ConversationSummaryDto.EvidenceMessageDto.builder()
+                                                            .sender((String) m.get("sender"))
+                                                            .content((String) m.get("content"))
+                                                            .build())
+                                                    .collect(Collectors.toList());
+                                            return ConversationSummaryDto.AttendeeEvidenceDto.builder()
+                                                    .name((String) ev.get("name"))
+                                                    .messages(evMsgs)
+                                                    .build();
+                                        })
+                                        .collect(Collectors.toList());
                                 return ConversationSummaryDto.ScheduleDto.builder()
                                         .event((String) s.get("event"))
                                         .status((String) s.get("status"))
@@ -129,6 +156,7 @@ public class GeminiAiService {
                                         .time((String) s.get("time"))
                                         .attendees(attendees)
                                         .latecomers(schedLatecomers)
+                                        .attendeeEvidence(attendeeEvidence)
                                         .build();
                             })
                             .collect(Collectors.toList());

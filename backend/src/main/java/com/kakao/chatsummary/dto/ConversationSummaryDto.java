@@ -86,6 +86,35 @@ public class ConversationSummaryDto {
 
         @JsonProperty("latecomers")
         private List<String> latecomers;
+
+        @JsonProperty("attendee_evidence")
+        private List<AttendeeEvidenceDto> attendeeEvidence;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class AttendeeEvidenceDto {
+
+        @JsonProperty("name")
+        private String name;
+
+        @JsonProperty("messages")
+        private List<EvidenceMessageDto> messages;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class EvidenceMessageDto {
+
+        @JsonProperty("sender")
+        private String sender;
+
+        @JsonProperty("content")
+        private String content;
     }
 
     @Getter
