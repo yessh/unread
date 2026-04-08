@@ -58,18 +58,6 @@ export interface ParticipantAnalysis {
   confidence_score: number
 }
 
-export interface AiAnalysisResponse {
-  session_id: number
-  room_name: string
-  analysis_timestamp: string
-  conversation_summary: ConversationSummary
-  keyword_extractions: KeywordExtraction[]
-  participant_analyses: ParticipantAnalysis[]
-  overall_insights: string
-  success: boolean
-  error_message?: string
-}
-
 // 프론트엔드 내부용 타입
 
 export interface ParsedMessage {

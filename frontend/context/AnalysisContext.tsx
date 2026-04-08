@@ -4,7 +4,7 @@ import { createContext, useContext, useReducer, ReactNode, useCallback } from 'r
 import type { ConversationSummary, KeywordExtraction, KeywordTag, ParsedMessage, UploadState } from '@/lib/types'
 import { parseKakaoTxt } from '@/lib/parseKakaoTxt'
 import { parseCsv } from '@/lib/parseCsv'
-import { summarizeConversation as summarizeApi, extractKeywords as extractKeywordsApi } from '@/lib/api'
+import { extractKeywords as extractKeywordsApi, summarizeConversation as summarizeApi } from '@/lib/api'
 
 interface AnalysisState {
   parsedMessages: ParsedMessage[] | null
