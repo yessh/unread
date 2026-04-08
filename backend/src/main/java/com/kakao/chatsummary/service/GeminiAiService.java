@@ -81,11 +81,12 @@ public class GeminiAiService {
                       "child_ids": ["2"],
                       "schedules": [
                         {
-                          "event": "약속/일정 내용 (없으면 생략)",
+                          "event": "약속/일정명 (15자 이내, 없으면 생략)",
+                          "status": "확정 | 미정 | 취소 | 변경 중 하나",
                           "location": "장소 (언급 없으면 null)",
                           "time": "날짜/시각 (언급 없으면 null)",
-                          "attendees": ["이 약속에 참석하는 사람 이름 — 직접 메시지를 보낸 사람뿐 아니라 '○○도 온대', '○○ 데려올게' 등으로 언급된 사람도 포함"],
-                          "latecomers": ["이 약속에서 지각하거나 늦는다고 언급된 사람 이름"]
+                          "attendees": ["참석이 언급된 사람 이름 — '○○도 온대', '○○ 데려올게' 등 포함"],
+                          "latecomers": ["지각하거나 늦는다고 언급된 사람 이름"]
                         }
                       ],
                       "facts": [
@@ -97,9 +98,10 @@ public class GeminiAiService {
                     }
                   ]
                 }
-                - schedules: 해당 주제에서 약속·장소·시각이 언급된 경우만 포함. 없으면 빈 배열 []
-                - schedules[].attendees: 이 약속에 참석하는 사람 이름 목록. 메시지 발신자뿐 아니라 참석이 언급된 사람도 포함. 없으면 빈 배열 []
-                - schedules[].latecomers: 이 약속에서 지각·늦음이 언급된 사람 이름 목록. 없으면 빈 배열 []
+                - schedules: 해당 주제에서 약속·장소·시각이 언급된 경우 포함. 없으면 빈 배열 []
+                - schedules[].status: 이 노드에서 해당 약속의 상태 — 확정/미정/취소/변경 중 하나
+                - schedules[].attendees: 참석이 언급된 사람 이름 목록. 없으면 빈 배열 []
+                - schedules[].latecomers: 이 약속에서 지각·늦음이 언급된 사람. 없으면 빈 배열 []
                 - facts: 해당 주제의 대화 끝에 확인된 사실·합의·결론만 포함. 오가는 말 중 최종적으로 정해지거나 인정된 것만. 없으면 빈 배열 []
                 """, effectiveStart.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
                    effectiveEnd.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
@@ -122,6 +124,7 @@ public class GeminiAiService {
                                 List<String> schedLatecomers = (List<String>) s.getOrDefault("latecomers", Collections.emptyList());
                                 return ConversationSummaryDto.ScheduleDto.builder()
                                         .event((String) s.get("event"))
+                                        .status((String) s.get("status"))
                                         .location((String) s.get("location"))
                                         .time((String) s.get("time"))
                                         .attendees(attendees)

@@ -17,6 +17,7 @@ export interface CoreMessage {
 
 export interface ScheduleInfo {
   event: string | null
+  status?: string | null
   location: string | null
   time: string | null
   attendees?: string[]

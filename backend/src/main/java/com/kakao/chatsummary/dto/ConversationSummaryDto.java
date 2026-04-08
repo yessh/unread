@@ -72,6 +72,9 @@ public class ConversationSummaryDto {
         @JsonProperty("event")
         private String event;
 
+        @JsonProperty("status")
+        private String status;
+
         @JsonProperty("location")
         private String location;
 
