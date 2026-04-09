@@ -1,10 +1,12 @@
 package com.kakao.chatsummary.entity;
 
+import com.kakao.chatsummary.util.VectorConverter;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
@@ -15,6 +17,7 @@ import java.time.LocalDateTime;
         @Index(name = "idx_sender_name", columnList = "sender_name")
 })
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -43,4 +46,8 @@ public class ChatMessage {
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column(name = "embedding", columnDefinition = "vector(768)")
+    @Convert(converter = VectorConverter.class)
+    private float[] embedding;
 }

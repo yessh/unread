@@ -3,6 +3,7 @@ package com.kakao.chatsummary.controller;
 import com.kakao.chatsummary.dto.*;
 import com.kakao.chatsummary.entity.ChatMessage;
 import com.kakao.chatsummary.repository.ChatMessageRepository;
+import com.kakao.chatsummary.service.EmbeddingService;
 import com.kakao.chatsummary.service.GeminiAiService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,7 @@ public class AiAnalysisController {
 
     private final GeminiAiService aiService;
     private final ChatMessageRepository messageRepository;
+    private final EmbeddingService embeddingService;
 
     /**
      * 기간 기반 대화 요약
@@ -140,6 +142,16 @@ public class AiAnalysisController {
                             .messageTime(OffsetDateTime.parse(m.getTimestamp()).toLocalDateTime())
                             .build())
                     .collect(Collectors.toList());
+
+            // DB에 저장 (중복 방지: 이미 저장된 세션이면 스킵)
+            boolean alreadySaved = !messageRepository.findBySessionId(request.getSessionId()).isEmpty();
+            if (!alreadySaved) {
+                messageRepository.saveAll(messages);
+                // 저장 후 비동기 임베딩 실행
+                var executor = Executors.newSingleThreadExecutor();
+                executor.submit(() -> embeddingService.embedSessionMessages(request.getSessionId()));
+                executor.shutdown();
+            }
         } else {
             messages = messageRepository.findBySessionId(request.getSessionId());
         }
