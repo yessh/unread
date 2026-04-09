@@ -15,12 +15,44 @@ export interface CoreMessage {
   relevance: string
 }
 
+export interface AttendeeEvidence {
+  name: string
+  messages: { sender: string; content: string }[]
+}
+
+export interface ScheduleInfo {
+  event: string | null
+  status?: string | null
+  location: string | null
+  time: string | null
+  attendees?: string[]
+  latecomers?: string[]
+  attendee_evidence?: AttendeeEvidence[]
+}
+
+export interface FactInfo {
+  category: string
+  content: string
+}
+
+export interface ConversationTreeNode {
+  id: string
+  title: string
+  description: string
+  parent_ids: string[]
+  child_ids: string[]
+  schedules?: ScheduleInfo[]
+  facts?: FactInfo[]
+}
+
 export interface ConversationSummary {
   period: string
   summary: string
   main_topics: string[]
+  tree_nodes?: ConversationTreeNode[]
   message_count: number
   participant_count: number
+  participants?: string[]
 }
 
 export interface KeywordExtraction {
@@ -47,18 +79,6 @@ export interface ParticipantAnalysis {
   response_tone: string
   linguistic_features: LinguisticFeatures
   confidence_score: number
-}
-
-export interface AiAnalysisResponse {
-  session_id: number
-  room_name: string
-  analysis_timestamp: string
-  conversation_summary: ConversationSummary
-  keyword_extractions: KeywordExtraction[]
-  participant_analyses: ParticipantAnalysis[]
-  overall_insights: string
-  success: boolean
-  error_message?: string
 }
 
 // 프론트엔드 내부용 타입

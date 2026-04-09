@@ -10,12 +10,14 @@ import { Badge } from '@/components/common/Badge'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 import { ParticipantAnalysisSection } from '@/components/participants/ParticipantAnalysisSection'
 import { TimeRangeSlider } from '@/components/dashboard/TimeRangeSlider'
+import { ConversationTreeView } from '@/components/dashboard/ConversationTreeView'
+import { SummaryDigest } from '@/components/dashboard/SummaryDigest'
 import { useAnalysis } from '@/context/AnalysisContext'
 import { buildHourlyData, buildWeeklyData, buildParticipantDataFromMessages, buildDayOfWeekData } from '@/lib/chartUtils'
 
 export default function DashboardPage() {
   const router = useRouter()
-  const { parsedMessages, roomName, summaryResult, summaryHours, summarizeTimeRange, resetAnalysis } = useAnalysis()
+  const { parsedMessages, roomName, summaryResult, summaryHours, summarizeTimeRange } = useAnalysis()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -66,11 +68,6 @@ export default function DashboardPage() {
     }
   }
 
-  const handleReset = () => {
-    resetAnalysis()
-    router.push('/upload')
-  }
-
   if (!parsedMessages) return null
 
   const formatDate = (d: Date) =>
@@ -80,21 +77,13 @@ export default function DashboardPage() {
     <main className="min-h-screen bg-surface-base">
       {/* 헤더 */}
       <section className="border-b border-surface-elevated bg-surface-card/50 px-4 py-10 backdrop-blur-sm sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-7xl items-start justify-between">
-          <div>
-            <h1 className="mb-1 text-3xl font-bold text-content-primary">{roomName}</h1>
-            {oldestTime && latestTime && (
-              <p className="text-sm text-content-secondary">
-                {formatDate(oldestTime)} ~ {formatDate(latestTime)}
-              </p>
-            )}
-          </div>
-          <button
-            onClick={handleReset}
-            className="rounded-lg border border-surface-elevated px-4 py-2 text-sm text-content-secondary hover:text-content-primary"
-          >
-            다시 업로드
-          </button>
+        <div className="mx-auto max-w-7xl">
+          <h1 className="mb-1 text-3xl font-bold text-content-primary">{roomName}</h1>
+          {oldestTime && latestTime && (
+            <p className="text-sm text-content-secondary">
+              {formatDate(oldestTime)} ~ {formatDate(latestTime)}
+            </p>
+          )}
         </div>
       </section>
 
@@ -156,9 +145,9 @@ export default function DashboardPage() {
 
             {/* 요약 결과 */}
             {summaryResult && !loading && (
-              <div className="card space-y-5">
+              <div className="space-y-5">
                 {/* 통계 수치 */}
-                <div className="grid grid-cols-3 gap-4 border-b border-surface-elevated pb-5">
+                <div className="card grid grid-cols-3 gap-4">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-accent-primary">
                       {summaryResult.message_count.toLocaleString()}
@@ -177,23 +166,29 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                {/* 요약 텍스트 */}
-                <div>
-                  <h3 className="mb-2 font-semibold text-content-primary">요약</h3>
-                  <p className="text-sm leading-relaxed text-content-secondary">{summaryResult.summary}</p>
-                </div>
-
-                {/* 주요 주제 */}
-                {summaryResult.main_topics.length > 0 && (
-                  <div>
-                    <h3 className="mb-2 font-semibold text-content-primary">주요 주제</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {summaryResult.main_topics.map((topic, idx) => (
-                        <Badge key={idx} variant="primary">{topic}</Badge>
-                      ))}
-                    </div>
-                  </div>
+                {/* 한 줄 요약 */}
+                {summaryResult.summary && (
+                  <p className="text-sm text-content-secondary">{summaryResult.summary}</p>
                 )}
+
+                {/* 트리 뷰 */}
+                {summaryResult.tree_nodes && summaryResult.tree_nodes.length > 0 ? (
+                  <ConversationTreeView nodes={summaryResult.tree_nodes} />
+                ) : (
+                  summaryResult.main_topics.length > 0 && (
+                    <div className="card">
+                      <h3 className="mb-2 font-semibold text-content-primary">주요 주제</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {summaryResult.main_topics.map((topic, idx) => (
+                          <Badge key={idx} variant="primary">{topic}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                )}
+
+                {/* 최종 정리 */}
+                <SummaryDigest summaryResult={summaryResult} />
               </div>
             )}
           </div>

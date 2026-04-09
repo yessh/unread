@@ -46,6 +46,8 @@ spring:
       indent-output: true
     deserialization:
       fail-on-unknown-properties: false
+      adjust-dates-to-context-time-zone: false
+    time-zone: UTC
 
   # Spring AI - Gemini via OpenAI-compatible endpoint
   ai:

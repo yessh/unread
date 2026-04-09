@@ -1,4 +1,4 @@
-import type { AiAnalysisResponse, ConversationSummary, KeywordExtraction, ParticipantAnalysis } from './types'
+import type { ConversationSummary, KeywordExtraction, ParticipantAnalysis } from './types'
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080/api'
 
@@ -28,26 +28,6 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   }
 
   return response.json()
-}
-
-// 전체 분석 API
-export async function requestFullAnalysis(req: {
-  session_id: number
-  messages?: Array<{ sender: string; content: string; timestamp: string }>
-  start_time?: string
-  end_time?: string
-  keywords?: string[]
-}): Promise<AiAnalysisResponse> {
-  return apiFetch<AiAnalysisResponse>('/analysis/full-analysis', {
-    method: 'POST',
-    body: JSON.stringify({
-      session_id: req.session_id,
-      messages: req.messages,
-      start_time: req.start_time,
-      end_time: req.end_time,
-      keywords: req.keywords || [],
-    }),
-  })
 }
 
 // 키워드 추출 API

@@ -13,6 +13,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -136,7 +137,7 @@ public class AiAnalysisController {
                             .sessionId(request.getSessionId())
                             .senderName(m.getSender())
                             .messageContent(m.getContent())
-                            .messageTime(LocalDateTime.parse(m.getTimestamp()))
+                            .messageTime(OffsetDateTime.parse(m.getTimestamp()).toLocalDateTime())
                             .build())
                     .collect(Collectors.toList());
         } else {
@@ -145,10 +146,10 @@ public class AiAnalysisController {
 
         AiAnalysisResponseDto result = aiService.analyzeConversation(
                 request.getSessionId(),
-                null,   
+                null,
                 messages,
-                request.getStartTime(),
-                request.getEndTime(),
+                request.getStartTimeAsLocal(),
+                request.getEndTimeAsLocal(),
                 request.getKeywords());
 
         return ResponseEntity.ok(result);

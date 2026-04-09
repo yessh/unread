@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @Getter
@@ -22,11 +23,19 @@ public class FullAnalysisRequest {
     private List<ParsedMessageDto> messages;
 
     @JsonProperty("start_time")
-    private LocalDateTime startTime;
+    private OffsetDateTime startTime;
 
     @JsonProperty("end_time")
-    private LocalDateTime endTime;
+    private OffsetDateTime endTime;
 
     @JsonProperty("keywords")
     private List<String> keywords;
+
+    public LocalDateTime getStartTimeAsLocal() {
+        return startTime != null ? startTime.toLocalDateTime() : null;
+    }
+
+    public LocalDateTime getEndTimeAsLocal() {
+        return endTime != null ? endTime.toLocalDateTime() : null;
+    }
 }
