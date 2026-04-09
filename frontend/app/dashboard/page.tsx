@@ -12,6 +12,7 @@ import { ParticipantAnalysisSection } from '@/components/participants/Participan
 import { TimeRangeSlider } from '@/components/dashboard/TimeRangeSlider'
 import { ConversationTreeView } from '@/components/dashboard/ConversationTreeView'
 import { SummaryDigest } from '@/components/dashboard/SummaryDigest'
+import { VectorSearchBox } from '@/components/search/VectorSearchBox'
 import { useAnalysis } from '@/context/AnalysisContext'
 import { buildHourlyData, buildWeeklyData, buildParticipantDataFromMessages, buildDayOfWeekData } from '@/lib/chartUtils'
 
@@ -208,7 +209,18 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* 3. 참여자 성격 분석 */}
+          {/* 3. 대화 검색 */}
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-2xl font-bold text-content-primary">대화 검색</h2>
+              <p className="mt-1 text-sm text-content-secondary">
+                자연어로 원하는 대화를 찾아보세요.
+              </p>
+            </div>
+            <VectorSearchBox sessionId={1} />
+          </div>
+
+          {/* 4. 참여자 성격 분석 */}
           <div className="space-y-4">
             <div>
               <h2 className="text-2xl font-bold text-content-primary">참여자 성격 분석</h2>

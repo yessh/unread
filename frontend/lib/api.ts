@@ -138,6 +138,29 @@ export function analyzeParticipantStream(
   return () => controller.abort()
 }
 
+// 벡터 유사도 검색 API
+export interface VectorSearchResult {
+  id: number
+  sessionId: number
+  senderName: string
+  messageContent: string
+  messageTime: string
+  messageType: string
+}
+
+export async function vectorSearch(req: {
+  sessionId: number
+  query: string
+  limit?: number
+}): Promise<VectorSearchResult[]> {
+  const params = new URLSearchParams({
+    sessionId: String(req.sessionId),
+    query: req.query,
+    ...(req.limit ? { limit: String(req.limit) } : {}),
+  })
+  return apiFetch<VectorSearchResult[]>(`/vector/search?${params}`)
+}
+
 // 파일 업로드 API (추후 구현 시 사용)
 export async function uploadChatFile(file: File): Promise<{ session_id: number; room_name: string }> {
   const formData = new FormData()
