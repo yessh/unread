@@ -2,8 +2,10 @@ package com.kakao.chatsummary.repository;
 
 import com.kakao.chatsummary.entity.ChatMessage;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -20,11 +22,16 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
 
     List<ChatMessage> findByMessageTypeAndSessionId(String messageType, Long sessionId);
 
+    @Modifying
+    @Transactional
+    @Query(value = "UPDATE chat_messages SET embedding = (:vector)::vector WHERE id = :id", nativeQuery = true)
+    void updateEmbedding(@Param("id") Long id, @Param("vector") String vector);
+
     @Query(value = """
             SELECT * FROM chat_messages
             WHERE session_id = :sessionId
               AND embedding IS NOT NULL
-            ORDER BY embedding <=> CAST(:queryVector AS vector)
+            ORDER BY embedding <=> (:queryVector)::vector
             LIMIT :limit
             """, nativeQuery = true)
     List<ChatMessage> findSimilarMessages(

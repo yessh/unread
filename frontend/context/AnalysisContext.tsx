@@ -4,7 +4,7 @@ import { createContext, useContext, useReducer, ReactNode, useCallback } from 'r
 import type { ConversationSummary, KeywordExtraction, KeywordTag, ParsedMessage, UploadState } from '@/lib/types'
 import { parseKakaoTxt } from '@/lib/parseKakaoTxt'
 import { parseCsv } from '@/lib/parseCsv'
-import { extractKeywords as extractKeywordsApi, summarizeConversation as summarizeApi } from '@/lib/api'
+import { extractKeywords as extractKeywordsApi, summarizeConversation as summarizeApi, saveMessages as saveMessagesApi } from '@/lib/api'
 
 interface AnalysisState {
   parsedMessages: ParsedMessage[] | null
@@ -102,18 +102,30 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
         throw new Error('지원하지 않는 파일 형식입니다. .zip 또는 .csv를 사용해주세요.')
       }
 
+      const roomName = file.name.replace(/\.[^/.]+$/, '')
       dispatch({
         type: 'SET_PARSED_MESSAGES',
-        payload: { messages, roomName: file.name.replace(/\.[^/.]+$/, '') },
+        payload: { messages, roomName },
       })
 
-      const sessionId = parseInt(process.env.NEXT_PUBLIC_MOCK_SESSION_ID || '1', 10)
-      dispatch({ type: 'SET_SESSION_ID', payload: sessionId })
+      // 백엔드에 메시지 저장 + 임베딩 트리거
+      dispatch({ type: 'SET_UPLOAD_STATE', payload: { status: 'uploading', progress: 60 } })
+      const { session_id } = await saveMessagesApi({
+        room_name: roomName,
+        file_name: file.name,
+        messages: messages.map(m => ({
+          sender: m.sender,
+          content: m.content,
+          timestamp: m.timestamp.toISOString(),
+        })),
+      })
+      dispatch({ type: 'SET_SESSION_ID', payload: session_id })
 
       // sessionStorage에 저장
       if (typeof window !== 'undefined') {
         sessionStorage.setItem('parsedMessages', JSON.stringify(messages))
-        sessionStorage.setItem('roomName', file.name.replace(/\.[^/.]+$/, ''))
+        sessionStorage.setItem('roomName', roomName)
+        sessionStorage.setItem('sessionId', String(session_id))
       }
 
       dispatch({ type: 'SET_UPLOAD_STATE', payload: { status: 'done', progress: 100 } })
@@ -200,7 +212,8 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
           type: 'SET_PARSED_MESSAGES',
           payload: { messages, roomName: savedRoomName || 'Restored' },
         })
-        const sessionId = parseInt(process.env.NEXT_PUBLIC_MOCK_SESSION_ID || '1', 10)
+        const savedSessionId = sessionStorage.getItem('sessionId')
+        const sessionId = savedSessionId ? parseInt(savedSessionId, 10) : parseInt(process.env.NEXT_PUBLIC_MOCK_SESSION_ID || '1', 10)
         dispatch({ type: 'SET_SESSION_ID', payload: sessionId })
       } catch {
         // 파싱 실패 시 무시

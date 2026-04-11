@@ -1,0 +1,71 @@
+package com.kakao.chatsummary.controller;
+
+import com.kakao.chatsummary.dto.SaveMessagesRequest;
+import com.kakao.chatsummary.entity.ChatMessage;
+import com.kakao.chatsummary.entity.ChatSession;
+import com.kakao.chatsummary.repository.ChatMessageRepository;
+import com.kakao.chatsummary.repository.ChatSessionRepository;
+import com.kakao.chatsummary.service.EmbeddingService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeParseException;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Executors;
+
+@Slf4j
+@RestController
+@RequestMapping("/chat")
+@RequiredArgsConstructor
+public class ChatController {
+
+    private final ChatSessionRepository sessionRepository;
+    private final ChatMessageRepository messageRepository;
+    private final EmbeddingService embeddingService;
+
+    @PostMapping("/save")
+    public ResponseEntity<Map<String, Long>> saveMessages(@RequestBody SaveMessagesRequest request) {
+        // 세션 생성
+        ChatSession session = ChatSession.builder()
+                .userId(1L) // 현재 로그인 유저 고정 (추후 Security Context로 교체)
+                .roomName(request.getRoomName())
+                .fileName(request.getFileName())
+                .uploadedAt(LocalDateTime.now())
+                .messageCount(request.getMessages().size())
+                .build();
+        session = sessionRepository.save(session);
+        final Long sessionId = session.getId();
+
+        // 메시지 저장
+        List<ChatMessage> messages = request.getMessages().stream()
+                .map(m -> {
+                    LocalDateTime time;
+                    try {
+                        time = OffsetDateTime.parse(m.getTimestamp()).toLocalDateTime();
+                    } catch (Exception e) {
+                        time = LocalDateTime.now();
+                    }
+                    return ChatMessage.builder()
+                            .sessionId(sessionId)
+                            .senderName(m.getSender())
+                            .messageContent(m.getContent())
+                            .messageTime(time)
+                            .build();
+                })
+                .toList();
+        messageRepository.saveAll(messages);
+        log.info("메시지 저장 완료: sessionId={}, count={}", sessionId, messages.size());
+
+        // 비동기 임베딩
+        var executor = Executors.newSingleThreadExecutor();
+        executor.submit(() -> embeddingService.embedSessionMessages(sessionId));
+        executor.shutdown();
+
+        return ResponseEntity.ok(Map.of("session_id", sessionId));
+    }
+}

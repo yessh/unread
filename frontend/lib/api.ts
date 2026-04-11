@@ -138,6 +138,30 @@ export function analyzeParticipantStream(
   return () => controller.abort()
 }
 
+// 메시지 저장 + 임베딩 트리거 API
+export async function saveMessages(req: {
+  room_name: string
+  file_name: string
+  messages: Array<{ sender: string; content: string; timestamp: string }>
+}): Promise<{ session_id: number }> {
+  return apiFetch<{ session_id: number }>('/chat/save', {
+    method: 'POST',
+    body: JSON.stringify(req),
+  })
+}
+
+// 임베딩 진행 상태 조회 API
+export interface EmbeddingProgress {
+  status: 'IDLE' | 'IN_PROGRESS' | 'DONE' | 'FAILED'
+  total: number
+  done: number
+  percent: number
+}
+
+export async function getEmbedStatus(sessionId: number): Promise<EmbeddingProgress> {
+  return apiFetch<EmbeddingProgress>(`/vector/embed-status/${sessionId}`)
+}
+
 // 벡터 유사도 검색 API
 export interface VectorSearchResult {
   id: number

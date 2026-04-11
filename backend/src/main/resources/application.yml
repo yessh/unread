@@ -57,9 +57,6 @@ spring:
       chat:
         options:
           model: gemini-2.5-flash
-      embedding:
-        options:
-          model: text-embedding-004
 
 # App Configuration
 app:

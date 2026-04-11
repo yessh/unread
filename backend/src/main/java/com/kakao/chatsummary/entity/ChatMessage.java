@@ -47,7 +47,7 @@ public class ChatMessage {
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    @Column(name = "embedding", columnDefinition = "vector(768)")
+    @Column(name = "embedding", columnDefinition = "vector(768)", insertable = false, updatable = false)
     @Convert(converter = VectorConverter.class)
     private float[] embedding;
 }

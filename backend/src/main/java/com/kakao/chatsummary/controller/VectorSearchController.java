@@ -22,6 +22,12 @@ public class VectorSearchController {
         return ResponseEntity.ok("임베딩 완료");
     }
 
+    // 임베딩 진행 상태 조회
+    @GetMapping("/embed-status/{sessionId}")
+    public ResponseEntity<EmbeddingService.EmbeddingProgress> getEmbedStatus(@PathVariable Long sessionId) {
+        return ResponseEntity.ok(embeddingService.getProgress(sessionId));
+    }
+
     // 자연어로 유사 메시지 검색
     @GetMapping("/search")
     public ResponseEntity<List<ChatMessage>> search(
