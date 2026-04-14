@@ -16,17 +16,12 @@ export function FileTypeGuide() {
           <p>
             <strong className="text-content-primary">2. 메뉴 버튼 클릭</strong>
             <br />
-            우측 상단 ⋮ 또는 설정 메뉴
+            ⋮ → ⚙️ → 대화 내용 내보내기 → 텍스트 메시지만 보내기
           </p>
           <p>
-            <strong className="text-content-primary">3. 대화 내보내기</strong>
+            <strong className="text-content-primary">3. .zip 파일 업로드</strong>
             <br />
-            "대화 파일로 저장" 선택
-          </p>
-          <p>
-            <strong className="text-content-primary">4. .zip 파일 업로드</strong>
-            <br />
-            생성된 .zip 파일을 여기 드래그하세요
+            메일로 받은 .zip 파일을 여기 드래그하세요
           </p>
         </div>
       </div>
@@ -46,15 +41,10 @@ export function FileTypeGuide() {
           <p>
             <strong className="text-content-primary">2. 메뉴 클릭</strong>
             <br />
-            상단 메뉴 또는 마우스 우클릭
+            ⋮ → 채팅방 설정 → 대화 내용 관리 → 텍스트 파일로 저장
           </p>
           <p>
-            <strong className="text-content-primary">3. 대화 내보내기</strong>
-            <br />
-            "대화내용 저장" 선택
-          </p>
-          <p>
-            <strong className="text-content-primary">4. .csv 파일 업로드</strong>
+            <strong className="text-content-primary">3. .csv 파일 업로드</strong>
             <br />
             생성된 .csv 파일을 여기 드래그하세요
           </p>

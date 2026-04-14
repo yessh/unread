@@ -47,12 +47,6 @@ export default function LoginPage() {
             <GoogleIcon />
             Google로 계속하기
           </button>
-
-          <p className="mt-6 text-center text-xs text-content-tertiary">
-            로그인하면 분석 결과가 계정에 저장되어
-            <br />
-            언제든 다시 확인할 수 있습니다.
-          </p>
         </div>
       </div>
     </main>
