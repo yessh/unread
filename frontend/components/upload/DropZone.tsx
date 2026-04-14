@@ -1,7 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import clsx from 'clsx'
+import { useAuth } from '@/context/AuthContext'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 import type { UploadState } from '@/lib/types'
 
@@ -21,6 +23,9 @@ const STATUS_MESSAGES = {
 
 export function DropZone({ onFileDrop, uploadState }: DropZoneProps) {
   const [isDragOver, setIsDragOver] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const { user, loading: authLoading } = useAuth()
+  const router = useRouter()
 
   const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
@@ -39,6 +44,11 @@ export function DropZone({ onFileDrop, uploadState }: DropZoneProps) {
     e.stopPropagation()
     setIsDragOver(false)
 
+    if (!user) {
+      router.push('/login')
+      return
+    }
+
     const files = e.dataTransfer.files
     if (files.length > 0) {
       onFileDrop(files[0])
@@ -46,10 +56,23 @@ export function DropZone({ onFileDrop, uploadState }: DropZoneProps) {
   }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!user) {
+      router.push('/login')
+      return
+    }
+
     const files = e.currentTarget.files
     if (files && files.length > 0) {
       onFileDrop(files[0])
     }
+  }
+
+  const handleSelectButtonClick = () => {
+    if (!user) {
+      router.push('/login')
+      return
+    }
+    fileInputRef.current?.click()
   }
 
   const isLoading = uploadState.status !== 'idle' && uploadState.status !== 'done' && uploadState.status !== 'error'
@@ -112,18 +135,22 @@ export function DropZone({ onFileDrop, uploadState }: DropZoneProps) {
 
         {/* 파일 선택 버튼 */}
         {!isLoading && (
-          <label className="cursor-pointer">
-            <div className="rounded-lg bg-accent-primary px-6 py-3 font-medium text-white transition-opacity hover:opacity-90">
+          <>
+            <button
+              onClick={handleSelectButtonClick}
+              className="rounded-lg bg-accent-primary px-6 py-3 font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={authLoading}
+            >
               파일 선택하기
-            </div>
+            </button>
             <input
+              ref={fileInputRef}
               type="file"
               accept=".zip,.csv"
               onChange={handleFileSelect}
-              disabled={isLoading}
               className="hidden"
             />
-          </label>
+          </>
         )}
 
         {/* 에러 메시지 */}
