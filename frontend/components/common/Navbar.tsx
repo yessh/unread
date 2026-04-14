@@ -7,7 +7,7 @@ import { useAnalysis } from '@/context/AnalysisContext'
 
 export function Navbar() {
   const { user, logout } = useAuth()
-  const { resetAnalysis } = useAnalysis()
+  const { resetAnalysis, sessionId } = useAnalysis()
   const router = useRouter()
 
   const handleLogout = async () => {
@@ -20,11 +20,20 @@ export function Navbar() {
     router.push('/upload')
   }
 
+  const handleLogoClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault()
+    if (sessionId) {
+      router.push('/dashboard')
+    } else {
+      router.push('/upload')
+    }
+  }
+
   return (
     <nav className="sticky top-0 z-40 border-b border-surface-elevated bg-surface-card/80 backdrop-blur-md">
       <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
-          <Link href="/upload" className="flex items-center gap-2">
+          <Link href="/upload" onClick={handleLogoClick} className="flex items-center gap-2">
             <div className="flex-center h-8 w-8 rounded-lg bg-gradient-to-br from-accent-primary to-accent-secondary">
               <span className="text-sm font-bold text-white">U</span>
             </div>
