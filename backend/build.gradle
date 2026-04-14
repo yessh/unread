@@ -47,6 +47,9 @@ dependencies {
     // JSONB support for PostgreSQL
     implementation 'io.hypersistence:hypersistence-utils-hibernate-63:3.7.3'
 
+    // pgvector
+    implementation 'com.pgvector:pgvector:0.1.4'
+
     // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
