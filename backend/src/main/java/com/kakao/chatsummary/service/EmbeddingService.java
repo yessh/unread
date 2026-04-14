@@ -105,7 +105,7 @@ public class EmbeddingService {
                 chatMessageRepository.updateEmbedding(message.getId(), toVectorString(vector));
                 saved++;
             } catch (Exception e) {
-                log.warn("개별 임베딩 실패: messageId={}", message.getId());
+                log.warn("개별 임베딩 실패: messageId={}, error={}", message.getId(), e.getMessage());
             }
         }
         return saved;
@@ -113,7 +113,7 @@ public class EmbeddingService {
 
     public List<ChatMessage> searchSimilarMessages(Long sessionId, String query, int limit) {
         float[] queryVector = embeddingClient.embed(query);
-        return chatMessageRepository.findSimilarMessages(sessionId, toVectorString(queryVector), limit);
+        return chatMessageRepository.findSimilarMessages(sessionId, toVectorString(queryVector), query, limit);
     }
 
     private String toVectorString(float[] vector) {

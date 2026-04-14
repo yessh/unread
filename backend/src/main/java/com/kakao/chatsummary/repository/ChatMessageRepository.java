@@ -31,12 +31,17 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
             SELECT * FROM chat_messages
             WHERE session_id = :sessionId
               AND embedding IS NOT NULL
-            ORDER BY embedding <=> (:queryVector)::vector
+              AND (1 - (embedding <=> (:queryVector)::vector)) > 0.3
+            ORDER BY
+              (1 - (embedding <=> (:queryVector)::vector)) * 0.6 +
+              CASE WHEN LOWER(message_content) LIKE LOWER(CONCAT('%', :keyword, '%')) THEN 0.4 ELSE 0.0 END
+              DESC
             LIMIT :limit
             """, nativeQuery = true)
     List<ChatMessage> findSimilarMessages(
             @Param("sessionId") Long sessionId,
             @Param("queryVector") String queryVector,
+            @Param("keyword") String keyword,
             @Param("limit") int limit
     );
 }
