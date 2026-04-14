@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -38,10 +39,20 @@ public class EmbeddingService {
         return progressMap.getOrDefault(sessionId, new EmbeddingProgress(EmbeddingStatus.IDLE, 0, 0));
     }
 
+    public void embedSessionMessagesBetween(Long sessionId, LocalDateTime startTime, LocalDateTime endTime) {
+        List<ChatMessage> messages = chatMessageRepository.findBySessionIdAndMessageTimeBetween(sessionId, startTime, endTime);
+        log.info("구간 임베딩 시작: sessionId={}, {}~{}, 메시지 수={}", sessionId, startTime, endTime, messages.size());
+        embedMessages(sessionId, messages);
+    }
+
     public void embedSessionMessages(Long sessionId) {
         List<ChatMessage> messages = chatMessageRepository.findBySessionId(sessionId);
+        log.info("전체 임베딩 시작: sessionId={}, 메시지 수={}", sessionId, messages.size());
+        embedMessages(sessionId, messages);
+    }
+
+    private void embedMessages(Long sessionId, List<ChatMessage> messages) {
         int total = messages.size();
-        log.info("임베딩 시작: sessionId={}, 메시지 수={}", sessionId, total);
         progressMap.put(sessionId, new EmbeddingProgress(EmbeddingStatus.IN_PROGRESS, total, 0));
 
         // 배치 분할

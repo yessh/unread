@@ -151,7 +151,12 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
     const messages = filtered.map((m) => ({ sender: m.sender, content: m.content }))
     console.log(`[요약 요청] ${hours}시간 전 ~ 최신 / 메시지 수: ${filtered.length}`)
 
-    const result = await summarizeApi({ session_id: state.sessionId, messages })
+    const result = await summarizeApi({
+      session_id: state.sessionId,
+      start_time: new Date(cutoff).toISOString(),
+      end_time: new Date(latestTime).toISOString(),
+      messages,
+    })
     dispatch({ type: 'SET_SUMMARY_RESULT', payload: { result, hours } })
   }, [state.parsedMessages, state.sessionId])
 
@@ -167,7 +172,12 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
     }
 
     const messages = filtered.map((m) => ({ sender: m.sender, content: m.content }))
-    const result = await summarizeApi({ session_id: state.sessionId, messages })
+    const result = await summarizeApi({
+      session_id: state.sessionId,
+      start_time: startTime.toISOString(),
+      end_time: endTime.toISOString(),
+      messages,
+    })
     const diffHours = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60))
     dispatch({ type: 'SET_SUMMARY_RESULT', payload: { result, hours: diffHours } })
   }, [state.parsedMessages, state.sessionId])

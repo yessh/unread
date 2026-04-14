@@ -34,8 +34,9 @@ public class GeminiAiService {
         List<ChatMessage> filteredMessages = (startTime == null || endTime == null)
                 ? new ArrayList<>(messages)
                 : messages.stream()
-                        .filter(m -> !m.getMessageTime().isBefore(startTime) &&
-                                   !m.getMessageTime().isAfter(endTime))
+                        .filter(m -> m.getMessageTime() == null ||
+                                (!m.getMessageTime().isBefore(startTime) &&
+                                 !m.getMessageTime().isAfter(endTime)))
                         .collect(Collectors.toList());
 
         LocalDateTime effectiveStart = startTime != null ? startTime

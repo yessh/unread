@@ -35,15 +35,28 @@ public class AiAnalysisController {
     @PostMapping("/summarize")
     public ResponseEntity<ConversationSummaryDto> summarizeConversation(
             @RequestBody SummarizeRequest request) {
+        final Long sessionId = request.getSessionId();
+        final LocalDateTime startTime = request.getStartTimeAsLocal();
+        final LocalDateTime endTime = request.getEndTimeAsLocal();
+
         List<ChatMessage> messages = request.getMessages().stream()
                 .map(m -> ChatMessage.builder()
+                        .sessionId(sessionId)
                         .senderName(m.getSender())
                         .messageContent(m.getContent())
-                        .messageTime(LocalDateTime.now())
                         .build())
                 .collect(Collectors.toList());
 
-        ConversationSummaryDto result = aiService.summarizeConversation(messages, null, null);
+        log.info("요약 요청: sessionId={}, 메시지 수={}, 구간={}~{}", sessionId, messages.size(), startTime, endTime);
+
+        // 요약과 동시에 해당 구간 임베딩 비동기 시작
+        if (startTime != null && endTime != null) {
+            var executor = Executors.newSingleThreadExecutor();
+            executor.submit(() -> embeddingService.embedSessionMessagesBetween(sessionId, startTime, endTime));
+            executor.shutdown();
+        }
+
+        ConversationSummaryDto result = aiService.summarizeConversation(messages, startTime, endTime);
         return ResponseEntity.ok(result);
     }
 
@@ -147,21 +160,29 @@ public class AiAnalysisController {
             boolean alreadySaved = !messageRepository.findBySessionId(request.getSessionId()).isEmpty();
             if (!alreadySaved) {
                 messageRepository.saveAll(messages);
-                // 저장 후 비동기 임베딩 실행
-                var executor = Executors.newSingleThreadExecutor();
-                executor.submit(() -> embeddingService.embedSessionMessages(request.getSessionId()));
-                executor.shutdown();
             }
         } else {
             messages = messageRepository.findBySessionId(request.getSessionId());
         }
 
+        // 요약 시간 범위에 해당하는 메시지만 비동기 임베딩
+        LocalDateTime startTime = request.getStartTimeAsLocal();
+        LocalDateTime endTime = request.getEndTimeAsLocal();
+        final Long sessionId = request.getSessionId();
+        var executor = Executors.newSingleThreadExecutor();
+        if (startTime != null && endTime != null) {
+            executor.submit(() -> embeddingService.embedSessionMessagesBetween(sessionId, startTime, endTime));
+        } else {
+            executor.submit(() -> embeddingService.embedSessionMessages(sessionId));
+        }
+        executor.shutdown();
+
         AiAnalysisResponseDto result = aiService.analyzeConversation(
-                request.getSessionId(),
+                sessionId,
                 null,
                 messages,
-                request.getStartTimeAsLocal(),
-                request.getEndTimeAsLocal(),
+                startTime,
+                endTime,
                 request.getKeywords());
 
         return ResponseEntity.ok(result);

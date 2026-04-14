@@ -42,15 +42,22 @@ export function DateRangeSummarizer() {
     !loading
 
   const handleSummarize = async () => {
-    if (!canSubmit || !sessionId) return
+    if (!canSubmit || !sessionId || !parsedMessages) return
     setLoading(true)
     setError(null)
     setResult(null)
     try {
+      const start = new Date(startDatetime).getTime()
+      const end = new Date(endDatetime).getTime()
+      const rangeMessages = parsedMessages
+        .filter((m) => m.timestamp.getTime() >= start && m.timestamp.getTime() <= end)
+        .map((m) => ({ sender: m.sender, content: m.content }))
+
       const summary = await summarizeConversation({
         session_id: sessionId,
-        start_time: new Date(startDatetime).toISOString(),
-        end_time: new Date(endDatetime).toISOString(),
+        start_time: new Date(start).toISOString(),
+        end_time: new Date(end).toISOString(),
+        messages: rangeMessages,
       })
       setResult(summary)
     } catch (e) {
