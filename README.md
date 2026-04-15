@@ -8,7 +8,7 @@
 ### 1️⃣ 파일 업로드 & 즉시 분석
 모바일 카카오톡 대화(.zip) 또는 PC 대화(.csv)를 드래그&드롭으로 업로드하면 자동으로 파싱되고 AI 분석이 시작됩니다.
 
-![File Upload Demo](./assets/oneonoe.gif)
+![File Upload Demo](./assets/oneone.gif)
 
 **지원 형식**:
 - 📱 모바일: KakaoTalk_*.txt (ZIP 압축)
