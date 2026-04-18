@@ -484,6 +484,42 @@ public class GeminiAiService {
     }
 
     /**
+     * RAG: 검색된 메시지를 컨텍스트로 사용해 질문에 답변
+     */
+    public String answerWithContext(String query, List<ChatMessage> retrievedMessages) {
+        if (retrievedMessages.isEmpty()) {
+            return chatClient.prompt()
+                    .user(query)
+                    .call()
+                    .content();
+        }
+
+        String context = retrievedMessages.stream()
+                .map(m -> String.format("[%s] %s: %s",
+                        m.getMessageTime().format(DateTimeFormatter.ofPattern("MM/dd HH:mm")),
+                        m.getSenderName(),
+                        m.getMessageContent()))
+                .collect(Collectors.joining("\n"));
+
+        String prompt = String.format("""
+                아래는 카카오톡 대화에서 질문과 관련된 메시지들입니다.
+
+                === 관련 메시지 ===
+                %s
+
+                === 질문 ===
+                %s
+
+                위 메시지들을 바탕으로 질문에 답해주세요. 메시지에 없는 내용은 추측하지 마세요.
+                """, context, query);
+
+        return chatClient.prompt()
+                .user(prompt)
+                .call()
+                .content();
+    }
+
+    /**
      * 메시지를 AI 분석용 텍스트로 포맷팅
      */
     private String formatMessagesForAi(List<ChatMessage> messages) {

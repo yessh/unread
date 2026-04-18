@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { vectorSearch, VectorSearchResult } from '@/lib/api'
+import { ragSearch, RagSearchResult } from '@/lib/api'
 
 interface VectorSearchBoxProps {
   sessionId: number
@@ -9,22 +9,22 @@ interface VectorSearchBoxProps {
 
 export function VectorSearchBox({ sessionId }: VectorSearchBoxProps) {
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<VectorSearchResult[]>([])
+  const [result, setResult] = useState<RagSearchResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [searched, setSearched] = useState(false)
+  const [showSources, setShowSources] = useState(false)
 
   const handleSearch = async () => {
     if (!query.trim()) return
     setLoading(true)
     setError(null)
-    setSearched(true)
+    setResult(null)
+    setShowSources(false)
     try {
-      const data = await vectorSearch({ sessionId, query: query.trim(), limit: 20 })
-      setResults(data)
+      const data = await ragSearch({ sessionId, query: query.trim(), limit: 10 })
+      setResult(data)
     } catch (e) {
       setError('검색 중 오류가 발생했습니다. 임베딩이 완료되었는지 확인해주세요.')
-      setResults([])
     } finally {
       setLoading(false)
     }
@@ -57,7 +57,7 @@ export function VectorSearchBox({ sessionId }: VectorSearchBoxProps) {
           disabled={loading || !query.trim()}
           className="rounded-xl bg-accent-primary px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-40"
         >
-          {loading ? '검색 중...' : '검색'}
+          {loading ? '분석 중...' : '검색'}
         </button>
       </div>
 
@@ -66,27 +66,46 @@ export function VectorSearchBox({ sessionId }: VectorSearchBoxProps) {
         <div className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-400">{error}</div>
       )}
 
-      {/* 결과 없음 */}
-      {searched && !loading && !error && results.length === 0 && (
-        <p className="text-sm text-content-muted">관련 메시지를 찾지 못했습니다.</p>
-      )}
-
-      {/* 결과 목록 */}
-      {results.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-xs text-content-muted">{results.length}개 메시지 발견</p>
-          {results.map((msg) => (
-            <div
-              key={msg.id}
-              className="rounded-xl bg-surface-card px-4 py-3 transition hover:bg-surface-elevated"
-            >
-              <div className="mb-1 flex items-center justify-between">
-                <span className="text-xs font-semibold text-accent-primary">{msg.senderName}</span>
-                <span className="text-xs text-content-muted">{formatTime(msg.messageTime)}</span>
-              </div>
-              <p className="text-sm text-content-primary">{msg.messageContent}</p>
+      {/* RAG 답변 */}
+      {result && (
+        <div className="space-y-3">
+          {/* AI 답변 */}
+          <div className="rounded-xl bg-surface-card px-5 py-4 space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-accent-primary">AI 답변</span>
+              <span className="text-xs text-content-muted">참고 메시지 {result.retrievedCount}개 기반</span>
             </div>
-          ))}
+            <p className="text-sm text-content-primary leading-relaxed whitespace-pre-wrap">{result.answer}</p>
+          </div>
+
+          {/* 참고 메시지 토글 */}
+          {result.sources.length > 0 && (
+            <div>
+              <button
+                onClick={() => setShowSources((v) => !v)}
+                className="text-xs text-content-muted hover:text-content-secondary transition"
+              >
+                {showSources ? '▲ 참고 메시지 접기' : `▼ 참고 메시지 보기 (${result.sources.length}개)`}
+              </button>
+
+              {showSources && (
+                <div className="mt-2 space-y-2">
+                  {result.sources.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className="rounded-xl bg-surface-elevated px-4 py-3"
+                    >
+                      <div className="mb-1 flex items-center justify-between">
+                        <span className="text-xs font-semibold text-accent-primary">{msg.senderName}</span>
+                        <span className="text-xs text-content-muted">{formatTime(msg.messageTime)}</span>
+                      </div>
+                      <p className="text-sm text-content-primary">{msg.messageContent}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
