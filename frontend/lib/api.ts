@@ -187,6 +187,25 @@ export async function vectorSearch(req: {
   return apiFetch<VectorSearchResult[]>(`/vector/search?${params}`)
 }
 
+export interface RagSearchResult {
+  answer: string
+  retrievedCount: number
+  sources: VectorSearchResult[]
+}
+
+export async function ragSearch(req: {
+  sessionId: number
+  query: string
+  limit?: number
+}): Promise<RagSearchResult> {
+  const params = new URLSearchParams({
+    sessionId: String(req.sessionId),
+    query: req.query,
+    ...(req.limit ? { limit: String(req.limit) } : {}),
+  })
+  return apiFetch<RagSearchResult>(`/vector/rag-search?${params}`)
+}
+
 // 파일 업로드 API (추후 구현 시 사용)
 export async function uploadChatFile(file: File): Promise<{ session_id: number; room_name: string }> {
   const formData = new FormData()
