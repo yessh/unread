@@ -3,11 +3,14 @@ package com.kakao.chatsummary.controller;
 import com.kakao.chatsummary.dto.SaveMessagesRequest;
 import com.kakao.chatsummary.entity.ChatMessage;
 import com.kakao.chatsummary.entity.ChatSession;
+import com.kakao.chatsummary.entity.User;
 import com.kakao.chatsummary.repository.ChatMessageRepository;
 import com.kakao.chatsummary.repository.ChatSessionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -25,10 +28,14 @@ public class ChatController {
     private final ChatMessageRepository messageRepository;
 
     @PostMapping("/save")
-    public ResponseEntity<Map<String, Long>> saveMessages(@RequestBody SaveMessagesRequest request) {
+    public ResponseEntity<Map<String, Long>> saveMessages(@RequestBody SaveMessagesRequest request,
+                                                          @AuthenticationPrincipal User currentUser) {
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         // 세션 생성
         ChatSession session = ChatSession.builder()
-                .userId(1L) // 현재 로그인 유저 고정 (추후 Security Context로 교체)
+                .userId(currentUser.getId())
                 .roomName(request.getRoomName())
                 .fileName(request.getFileName())
                 .uploadedAt(LocalDateTime.now())

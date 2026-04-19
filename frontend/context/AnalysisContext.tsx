@@ -223,8 +223,9 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
           payload: { messages, roomName: savedRoomName || 'Restored' },
         })
         const savedSessionId = sessionStorage.getItem('sessionId')
-        const sessionId = savedSessionId ? parseInt(savedSessionId, 10) : parseInt(process.env.NEXT_PUBLIC_MOCK_SESSION_ID || '1', 10)
-        dispatch({ type: 'SET_SESSION_ID', payload: sessionId })
+        if (savedSessionId) {
+          dispatch({ type: 'SET_SESSION_ID', payload: parseInt(savedSessionId, 10) })
+        }
       } catch {
         // 파싱 실패 시 무시
       }

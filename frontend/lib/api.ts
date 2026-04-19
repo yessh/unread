@@ -19,8 +19,14 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
       'Content-Type': 'application/json',
       ...options?.headers,
     },
+    credentials: 'include',
     ...options,
   })
+
+  if (response.status === 401) {
+    window.location.href = '/login'
+    throw new ApiError(401, '로그인이 필요합니다')
+  }
 
   if (!response.ok) {
     const error = await response.text()
