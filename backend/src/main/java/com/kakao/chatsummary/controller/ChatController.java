@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -65,5 +66,45 @@ public class ChatController {
         log.info("메시지 저장 완료: sessionId={}, count={}", sessionId, messages.size());
 
         return ResponseEntity.ok(Map.of("session_id", sessionId));
+    }
+
+    @GetMapping("/sessions")
+    public ResponseEntity<List<Map<String, Object>>> getSessions(@AuthenticationPrincipal User currentUser) {
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        List<ChatSession> sessions = sessionRepository.findByUserIdOrderByUploadedAtDesc(currentUser.getId());
+        List<Map<String, Object>> result = sessions.stream().map(s -> {
+            Map<String, Object> m = new HashMap<>();
+            m.put("id", s.getId());
+            m.put("roomName", s.getRoomName());
+            m.put("fileName", s.getFileName());
+            m.put("uploadedAt", s.getUploadedAt());
+            m.put("messageCount", s.getMessageCount());
+            return m;
+        }).toList();
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/sessions/{sessionId}/messages")
+    public ResponseEntity<List<Map<String, Object>>> getSessionMessages(
+            @PathVariable Long sessionId,
+            @AuthenticationPrincipal User currentUser) {
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        ChatSession session = sessionRepository.findById(sessionId).orElse(null);
+        if (session == null || !session.getUserId().equals(currentUser.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        List<ChatMessage> messages = messageRepository.findBySessionId(sessionId);
+        List<Map<String, Object>> result = messages.stream().map(msg -> {
+            Map<String, Object> m = new HashMap<>();
+            m.put("sender", msg.getSenderName());
+            m.put("content", msg.getMessageContent());
+            m.put("timestamp", msg.getMessageTime());
+            return m;
+        }).toList();
+        return ResponseEntity.ok(result);
     }
 }

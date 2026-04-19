@@ -212,6 +212,24 @@ export async function ragSearch(req: {
   return apiFetch<RagSearchResult>(`/vector/rag-search?${params}`)
 }
 
+// 세션 목록 조회
+export interface ChatSessionSummary {
+  id: number
+  roomName: string
+  fileName: string
+  uploadedAt: string
+  messageCount: number
+}
+
+export async function getSessions(): Promise<ChatSessionSummary[]> {
+  return apiFetch<ChatSessionSummary[]>('/chat/sessions')
+}
+
+// 세션 메시지 조회
+export async function getSessionMessages(sessionId: number): Promise<Array<{ sender: string; content: string; timestamp: string }>> {
+  return apiFetch<Array<{ sender: string; content: string; timestamp: string }>>(`/chat/sessions/${sessionId}/messages`)
+}
+
 // 파일 업로드 API (추후 구현 시 사용)
 export async function uploadChatFile(file: File): Promise<{ session_id: number; room_name: string }> {
   const formData = new FormData()
