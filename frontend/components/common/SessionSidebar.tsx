@@ -6,6 +6,8 @@ import { getSessions, ChatSessionSummary } from '@/lib/api'
 import { useAnalysis } from '@/context/AnalysisContext'
 import { useAuth } from '@/context/AuthContext'
 
+const MAX_SESSIONS = 10
+
 export function SessionSidebar() {
   const { user } = useAuth()
   const { loadSession, resetAnalysis } = useAnalysis()
@@ -13,14 +15,22 @@ export function SessionSidebar() {
 
   const [open, setOpen] = useState(false)
   const [sessions, setSessions] = useState<ChatSessionSummary[]>([])
+  const [count, setCount] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
   const [loadingId, setLoadingId] = useState<number | null>(null)
 
+  // 로그인 시 카운트만 미리 조회
+  useEffect(() => {
+    if (!user) { setCount(null); return }
+    getSessions().then((s) => { setSessions(s); setCount(s.length) }).catch(console.error)
+  }, [user])
+
+  // 사이드바 열 때 최신 목록 갱신
   useEffect(() => {
     if (!open || !user) return
     setLoading(true)
     getSessions()
-      .then(setSessions)
+      .then((s) => { setSessions(s); setCount(s.length) })
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [open, user])
@@ -49,7 +59,7 @@ export function SessionSidebar() {
         aria-label="이전 파일 목록"
         className="fixed left-0 top-1/2 z-50 -translate-y-1/2 rounded-r-xl bg-surface-card border border-l-0 border-surface-elevated px-2 py-4 shadow-lg transition-all hover:bg-surface-elevated"
       >
-        <span className="flex flex-col items-center gap-1 text-content-secondary">
+        <span className="flex flex-col items-center gap-1.5 text-content-secondary">
           {open ? (
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 18l-6-6 6-6" />
@@ -58,6 +68,11 @@ export function SessionSidebar() {
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 18l6-6-6-6" />
             </svg>
+          )}
+          {count !== null && (
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent-primary text-[10px] font-bold text-white">
+              {count}
+            </span>
           )}
           <span className="[writing-mode:vertical-rl] text-xs font-medium select-none">이전 파일</span>
         </span>
@@ -76,7 +91,14 @@ export function SessionSidebar() {
         className={`fixed left-0 top-0 z-50 flex h-full w-80 flex-col bg-surface-card shadow-2xl border-r border-surface-elevated transition-transform duration-300 ${open ? 'translate-x-0' : '-translate-x-full'}`}
       >
         <div className="flex items-center justify-between border-b border-surface-elevated px-5 py-4">
-          <h2 className="text-base font-semibold text-content-primary">업로드한 파일</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-base font-semibold text-content-primary">업로드한 파일</h2>
+            {count !== null && (
+              <span className="rounded-full bg-surface-elevated px-2 py-0.5 text-xs font-medium text-content-secondary">
+                {count} / {MAX_SESSIONS}
+              </span>
+            )}
+          </div>
           <button
             onClick={() => setOpen(false)}
             className="rounded-md p-1.5 text-content-tertiary hover:bg-surface-elevated"
@@ -86,6 +108,12 @@ export function SessionSidebar() {
             </svg>
           </button>
         </div>
+
+        {count === MAX_SESSIONS && (
+          <p className="border-b border-surface-elevated bg-amber-500/10 px-5 py-2 text-xs text-amber-400">
+            최대 {MAX_SESSIONS}개까지 저장됩니다. 새 파일 업로드 시 가장 오래된 파일이 삭제됩니다.
+          </p>
+        )}
 
         <div className="flex-1 overflow-y-auto p-3">
           {loading ? (

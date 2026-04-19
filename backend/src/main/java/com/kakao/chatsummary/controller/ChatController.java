@@ -65,6 +65,17 @@ public class ChatController {
         messageRepository.saveAll(messages);
         log.info("메시지 저장 완료: sessionId={}, count={}", sessionId, messages.size());
 
+        // 10개 초과 시 가장 오래된 세션(들) 삭제
+        List<ChatSession> allSessions = sessionRepository.findByUserIdOrderByUploadedAtDesc(currentUser.getId());
+        if (allSessions.size() > 10) {
+            List<ChatSession> toDelete = allSessions.subList(10, allSessions.size());
+            for (ChatSession old : toDelete) {
+                messageRepository.deleteAll(messageRepository.findBySessionId(old.getId()));
+                sessionRepository.delete(old);
+                log.info("오래된 세션 삭제: sessionId={}", old.getId());
+            }
+        }
+
         return ResponseEntity.ok(Map.of("session_id", sessionId));
     }
 
