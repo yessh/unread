@@ -1,4 +1,4 @@
-import type { DayOfWeekChartData, HourlyChartData, MonthlyChartData, ParticipantAnalysis, ParticipantChartData, ParsedMessage } from './types'
+import type { DayOfWeekChartData, HourlyChartData, MonthlyChartData, ParticipantChartData, ParsedMessage } from './types'
 
 export function buildHourlyData(messages: ParsedMessage[]): HourlyChartData[] {
   const hourCounts: Record<number, number> = {}
@@ -59,16 +59,6 @@ export function buildDayOfWeekData(messages: ParsedMessage[]): DayOfWeekChartDat
     day: labels[i],
     count: Math.round((counts[i] / total) * 1000) / 10,
   }))
-}
-
-export function buildParticipantData(analyses: ParticipantAnalysis[]): ParticipantChartData[] {
-  return analyses
-    .map((analysis) => ({
-      name: analysis.name,
-      count: analysis.message_count,
-      percentage: Math.round(analysis.message_percentage * 10) / 10,
-    }))
-    .sort((a, b) => b.count - a.count)
 }
 
 export function buildParticipantDataFromMessages(messages: ParsedMessage[]): ParticipantChartData[] {

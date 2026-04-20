@@ -30,9 +30,6 @@ public class AiAnalysisResponseDto {
     @JsonProperty("keyword_extractions")
     private List<KeywordExtractionDto> keywordExtractions;
 
-    @JsonProperty("participant_analyses")
-    private List<ParticipantAnalysisDto> participantAnalyses;
-
     @JsonProperty("overall_insights")
     private String overallInsights;
 

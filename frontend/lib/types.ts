@@ -62,25 +62,6 @@ export interface KeywordExtraction {
   relevance_score: number
 }
 
-export interface LinguisticFeatures {
-  sentence_length: string
-  formality: string
-  expression_style: string
-}
-
-export interface ParticipantAnalysis {
-  name: string
-  personality_summary: string
-  communication_style: string
-  key_characteristics: string[]
-  message_count: number
-  message_percentage: number
-  emoji_usage_frequency: number
-  response_tone: string
-  linguistic_features: LinguisticFeatures
-  confidence_score: number
-}
-
 // 프론트엔드 내부용 타입
 
 export interface ParsedMessage {
@@ -94,8 +75,6 @@ export interface UploadState {
   progress: number
   errorMessage?: string
 }
-
-export type StreamingStatus = 'idle' | 'streaming' | 'done' | 'error'
 
 // 차트용 데이터 타입
 

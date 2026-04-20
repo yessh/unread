@@ -7,12 +7,9 @@ import com.kakao.chatsummary.service.EmbeddingService;
 import com.kakao.chatsummary.service.GeminiAiService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -74,73 +71,7 @@ public class AiAnalysisController {
     }
 
     /**
-     * 참여자 분석
-     */
-    @PostMapping("/analyze-participants")
-    public ResponseEntity<List<ParticipantAnalysisDto>> analyzeParticipants(
-            @RequestParam Long sessionId) {
-        List<ChatMessage> messages = messageRepository.findBySessionId(sessionId);
-        List<ParticipantAnalysisDto> results = aiService.analyzeParticipants(messages);
-        return ResponseEntity.ok(results);
-    }
-
-    /**
-     * 단일 참여자 분석 (온디맨드)
-     */
-    @PostMapping("/analyze-participant")
-    public ResponseEntity<ParticipantAnalysisDto> analyzeParticipant(
-            @RequestBody SingleParticipantAnalysisRequest request) {
-        ParticipantAnalysisDto result = aiService.analyzeParticipant(
-                request.getParticipantName(),
-                request.getMessages(),
-                request.getTotalMessages());
-        return ResponseEntity.ok(result);
-    }
-
-    /**
-     * 단일 참여자 분석 - SSE 스트리밍
-     */
-    @PostMapping(value = "/analyze-participant/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter analyzeParticipantStream(@RequestBody SingleParticipantAnalysisRequest request) {
-        SseEmitter emitter = new SseEmitter(60_000L);
-        var executor = Executors.newSingleThreadExecutor();
-        executor.submit(() -> {
-            try {
-                aiService.analyzeParticipantStream(
-                        request.getParticipantName(),
-                        request.getMessages(),
-                        request.getTotalMessages()
-                ).subscribe(
-                        chunk -> {
-                            try {
-                                emitter.send(SseEmitter.event().name("token").data(chunk));
-                            } catch (IOException e) {
-                                emitter.completeWithError(e);
-                            }
-                        },
-                        error -> {
-                            log.error("Streaming error for participant {}", request.getParticipantName(), error);
-                            emitter.completeWithError(error);
-                        },
-                        () -> {
-                            try {
-                                emitter.send(SseEmitter.event().name("done").data(""));
-                            } catch (IOException e) {
-                                log.warn("Failed to send done event", e);
-                            }
-                            emitter.complete();
-                        }
-                );
-            } catch (Exception e) {
-                emitter.completeWithError(e);
-            }
-        });
-        executor.shutdown();
-        return emitter;
-    }
-
-    /**
-     * 전체 분석 (요약 + 키워드 + 참여자 분석)
+     * 전체 분석 (요약 + 키워드)
      */
     @PostMapping("/full-analysis")
     public ResponseEntity<AiAnalysisResponseDto> fullAnalysis(
