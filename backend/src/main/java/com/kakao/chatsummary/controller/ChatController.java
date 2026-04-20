@@ -97,6 +97,23 @@ public class ChatController {
         return ResponseEntity.ok(result);
     }
 
+    @DeleteMapping("/sessions/{sessionId}")
+    public ResponseEntity<Void> deleteSession(
+            @PathVariable Long sessionId,
+            @AuthenticationPrincipal User currentUser) {
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        ChatSession session = sessionRepository.findById(sessionId).orElse(null);
+        if (session == null || !session.getUserId().equals(currentUser.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        messageRepository.deleteAll(messageRepository.findBySessionId(sessionId));
+        sessionRepository.delete(session);
+        log.info("세션 삭제: sessionId={}", sessionId);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/sessions/{sessionId}/messages")
     public ResponseEntity<List<Map<String, Object>>> getSessionMessages(
             @PathVariable Long sessionId,

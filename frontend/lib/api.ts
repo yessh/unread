@@ -226,6 +226,12 @@ export async function getSessions(): Promise<ChatSessionSummary[]> {
 }
 
 // 세션 메시지 조회
+export async function deleteSession(sessionId: number): Promise<void> {
+  const url = `${BASE_URL}/chat/sessions/${sessionId}`
+  const response = await fetch(url, { method: 'DELETE', credentials: 'include' })
+  if (!response.ok) throw new ApiError(response.status, `삭제 실패: ${response.status}`)
+}
+
 export async function getSessionMessages(sessionId: number): Promise<Array<{ sender: string; content: string; timestamp: string }>> {
   return apiFetch<Array<{ sender: string; content: string; timestamp: string }>>(`/chat/sessions/${sessionId}/messages`)
 }
