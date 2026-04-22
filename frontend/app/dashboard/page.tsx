@@ -21,6 +21,7 @@ export default function DashboardPage() {
   const { parsedMessages, roomName, sessionId, summaryResult, summaryHours, summarizeTimeRange } = useAnalysis()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [embeddingDone, setEmbeddingDone] = useState(false)
 
   useEffect(() => {
     if (!parsedMessages) {
@@ -217,8 +218,8 @@ export default function DashboardPage() {
                 자연어로 원하는 대화를 찾아보세요.
               </p>
             </div>
-            {sessionId && <EmbeddingStatus sessionId={sessionId} />}
-            {sessionId && <VectorSearchBox sessionId={sessionId} />}
+            {sessionId && <EmbeddingStatus sessionId={sessionId} onDone={() => setEmbeddingDone(true)} />}
+            {sessionId && <VectorSearchBox sessionId={sessionId} disabled={!embeddingDone} />}
           </div>
 
         </div>

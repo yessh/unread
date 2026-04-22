@@ -75,6 +75,11 @@ export async function saveMessages(req: {
   })
 }
 
+// 임베딩 시작 API (전체 메시지 대상)
+export async function startEmbedding(sessionId: number): Promise<void> {
+  await apiFetch<string>(`/vector/embed/${sessionId}`, { method: 'POST' })
+}
+
 // 임베딩 진행 상태 조회 API
 export interface EmbeddingProgress {
   status: 'IDLE' | 'IN_PROGRESS' | 'DONE' | 'FAILED'

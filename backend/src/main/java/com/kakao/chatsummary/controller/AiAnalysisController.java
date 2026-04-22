@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -45,13 +44,6 @@ public class AiAnalysisController {
                 .collect(Collectors.toList());
 
         log.info("요약 요청: sessionId={}, 메시지 수={}, 구간={}~{}", sessionId, messages.size(), startTime, endTime);
-
-        // 요약과 동시에 해당 구간 임베딩 비동기 시작
-        if (startTime != null && endTime != null) {
-            var executor = Executors.newSingleThreadExecutor();
-            executor.submit(() -> embeddingService.embedSessionMessagesBetween(sessionId, startTime, endTime));
-            executor.shutdown();
-        }
 
         ConversationSummaryDto result = aiService.summarizeConversation(messages, startTime, endTime);
         return ResponseEntity.ok(result);
@@ -96,17 +88,9 @@ public class AiAnalysisController {
             messages = messageRepository.findBySessionId(request.getSessionId());
         }
 
-        // 요약 시간 범위에 해당하는 메시지만 비동기 임베딩
         LocalDateTime startTime = request.getStartTimeAsLocal();
         LocalDateTime endTime = request.getEndTimeAsLocal();
         final Long sessionId = request.getSessionId();
-        var executor = Executors.newSingleThreadExecutor();
-        if (startTime != null && endTime != null) {
-            executor.submit(() -> embeddingService.embedSessionMessagesBetween(sessionId, startTime, endTime));
-        } else {
-            executor.submit(() -> embeddingService.embedSessionMessages(sessionId));
-        }
-        executor.shutdown();
 
         AiAnalysisResponseDto result = aiService.analyzeConversation(
                 sessionId,

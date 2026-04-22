@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
 
 @RestController
 @RequestMapping("/vector")
@@ -18,11 +19,13 @@ public class VectorSearchController {
     private final EmbeddingService embeddingService;
     private final GeminiAiService geminiAiService;
 
-    // 세션 메시지 전체 임베딩 (업로드 후 1회 호출)
+    // 세션 메시지 전체 임베딩 (버튼 클릭 시 1회 호출, 비동기)
     @PostMapping("/embed/{sessionId}")
     public ResponseEntity<String> embedSession(@PathVariable Long sessionId) {
-        embeddingService.embedSessionMessages(sessionId);
-        return ResponseEntity.ok("임베딩 완료");
+        var executor = Executors.newSingleThreadExecutor();
+        executor.submit(() -> embeddingService.embedSessionMessages(sessionId));
+        executor.shutdown();
+        return ResponseEntity.ok("임베딩 시작됨");
     }
 
     // 임베딩 진행 상태 조회
@@ -49,6 +52,11 @@ public class VectorSearchController {
             @RequestParam String query,
             @RequestParam(defaultValue = "10") int limit
     ) {
+        EmbeddingService.EmbeddingProgress progress = embeddingService.getProgress(sessionId);
+        if (progress.status() != EmbeddingService.EmbeddingStatus.DONE) {
+            return ResponseEntity.badRequest().body(Map.of("error", "임베딩이 완료되지 않았습니다. 먼저 인덱스를 생성해주세요."));
+        }
+
         List<ChatMessage> retrieved = embeddingService.searchSimilarMessages(sessionId, query, limit);
         String answer = geminiAiService.answerWithContext(query, retrieved);
         return ResponseEntity.ok(Map.of(

@@ -1,36 +1,78 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { getEmbedStatus, EmbeddingProgress } from '@/lib/api'
+import { getEmbedStatus, startEmbedding, EmbeddingProgress } from '@/lib/api'
 
 interface EmbeddingStatusProps {
   sessionId: number
+  onDone?: () => void
 }
 
-export function EmbeddingStatus({ sessionId }: EmbeddingStatusProps) {
+export function EmbeddingStatus({ sessionId, onDone }: EmbeddingStatusProps) {
   const [progress, setProgress] = useState<EmbeddingProgress | null>(null)
+  const [polling, setPolling] = useState(false)
+  const [starting, setStarting] = useState(false)
 
   useEffect(() => {
-    let intervalId: ReturnType<typeof setInterval>
+    // 초기 상태 조회
+    getEmbedStatus(sessionId)
+      .then((data) => {
+        setProgress(data)
+        if (data.status === 'DONE') onDone?.()  // eslint-disable-line react-hooks/exhaustive-deps
+      })
+      .catch(() => {})
+  }, [sessionId])
+
+  useEffect(() => {
+    if (!polling) return
 
     const fetch = async () => {
       try {
         const data = await getEmbedStatus(sessionId)
         setProgress(data)
-        if (data.status === 'DONE' || data.status === 'FAILED') {
-          clearInterval(intervalId)
+        if (data.status === 'DONE') {
+          setPolling(false)
+          onDone?.()
+        } else if (data.status === 'FAILED') {
+          setPolling(false)
         }
       } catch {
         // 서버 미연결 시 무시
       }
     }
 
-    fetch()
-    intervalId = setInterval(fetch, 2000)
+    const intervalId = setInterval(fetch, 2000)
     return () => clearInterval(intervalId)
-  }, [sessionId])
+  }, [polling, sessionId])
 
-  if (!progress || progress.status === 'IDLE') return null
+  const handleStart = async () => {
+    setStarting(true)
+    try {
+      await startEmbedding(sessionId)
+      setPolling(true)
+    } catch {
+      // 오류 시 무시
+    } finally {
+      setStarting(false)
+    }
+  }
+
+  if (!progress || progress.status === 'IDLE') {
+    return (
+      <div className="flex items-center gap-3 rounded-xl bg-surface-card px-4 py-3">
+        <p className="flex-1 text-sm text-content-secondary">
+          AI 검색 인덱스를 생성하면 자연어로 대화를 검색할 수 있습니다.
+        </p>
+        <button
+          onClick={handleStart}
+          disabled={starting}
+          className="shrink-0 rounded-xl bg-accent-primary px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-40"
+        >
+          {starting ? '시작 중...' : '인덱스 생성'}
+        </button>
+      </div>
+    )
+  }
 
   if (progress.status === 'DONE') {
     return (

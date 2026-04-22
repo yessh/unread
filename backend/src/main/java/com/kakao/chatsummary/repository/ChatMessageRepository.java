@@ -27,6 +27,11 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     @Query(value = "UPDATE chat_messages SET embedding = (:vector)::vector WHERE id = :id", nativeQuery = true)
     void updateEmbedding(@Param("id") Long id, @Param("vector") String vector);
 
+    @Query(value = "SELECT COUNT(*) FROM chat_messages WHERE session_id = :sessionId AND embedding IS NOT NULL", nativeQuery = true)
+    long countEmbeddedBySessionId(@Param("sessionId") Long sessionId);
+
+    long countBySessionId(Long sessionId);
+
     @Query(value = """
             SELECT * FROM chat_messages
             WHERE session_id = :sessionId
