@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-const PROTECTED_PATHS = ['/upload', '/dashboard']
+const PROTECTED_PATHS = ['/upload', '/dashboard', '/recap']
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -19,5 +19,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/upload/:path*', '/dashboard/:path*'],
+  matcher: ['/upload/:path*', '/dashboard/:path*', '/recap/:path*'],
 }

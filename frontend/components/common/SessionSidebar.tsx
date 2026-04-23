@@ -137,6 +137,20 @@ export function SessionSidebar() {
           </p>
         )}
 
+        {/* Recap 바로가기 */}
+        <div className="border-b border-surface-elevated p-3">
+          <button
+            onClick={() => { setOpen(false); router.push('/recap') }}
+            className="flex w-full items-center gap-3 rounded-xl border border-accent-primary/30 bg-accent-primary/10 px-4 py-3 text-left transition-all hover:bg-accent-primary/20"
+          >
+            <span className="text-lg">✨</span>
+            <div>
+              <p className="text-sm font-semibold text-accent-primary">Recap 보기</p>
+              <p className="text-xs text-content-muted">대화 하이라이트 한눈에</p>
+            </div>
+          </button>
+        </div>
+
         <div className="flex-1 overflow-y-auto p-3">
           {loading ? (
             <div className="flex justify-center py-12">
