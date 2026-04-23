@@ -10,8 +10,12 @@ import { Card2Total } from '@/components/recap/Card2Total'
 import { Card3Words } from '@/components/recap/Card3Words'
 import { Card4MonthlyKing } from '@/components/recap/Card4MonthlyKing'
 import { Card5FirstSender } from '@/components/recap/Card5FirstSender'
+import { Card6NightOwl } from '@/components/recap/Card6NightOwl'
+import { Card7LongestDay } from '@/components/recap/Card7LongestDay'
+import { Card8FoodVsLove } from '@/components/recap/Card8FoodVsLove'
+import { Card9MonthRange } from '@/components/recap/Card9MonthRange'
 
-const TOTAL_CARDS = 5
+const TOTAL_CARDS = 9
 
 export default function RecapPage() {
   const router = useRouter()
@@ -104,11 +108,46 @@ export default function RecapPage() {
         )}
         {current === 3 && (
           <RecapCard index={3} total={TOTAL_CARDS}>
-            <Card4MonthlyKing monthlyKing={recap.monthlyKing} />
+            <Card6NightOwl
+              topHours={recap.nightOwl.topHours}
+              isLateNight={recap.nightOwl.isLateNight}
+            />
           </RecapCard>
         )}
         {current === 4 && (
           <RecapCard index={4} total={TOTAL_CARDS}>
+            <Card7LongestDay
+              date={recap.longestDay.date}
+              count={recap.longestDay.count}
+              firstMsg={recap.longestDay.firstMsg}
+              lastMsg={recap.longestDay.lastMsg}
+            />
+          </RecapCard>
+        )}
+        {current === 5 && (
+          <RecapCard index={5} total={TOTAL_CARDS}>
+            <Card8FoodVsLove
+              foodCount={recap.foodVsLove.foodCount}
+              loveCount={recap.foodVsLove.loveCount}
+              winner={recap.foodVsLove.winner}
+            />
+          </RecapCard>
+        )}
+        {current === 6 && (
+          <RecapCard index={6} total={TOTAL_CARDS}>
+            <Card9MonthRange
+              busiest={recap.monthRange.busiest}
+              quietest={recap.monthRange.quietest}
+            />
+          </RecapCard>
+        )}
+        {current === 7 && (
+          <RecapCard index={7} total={TOTAL_CARDS}>
+            <Card4MonthlyKing monthlyKing={recap.monthlyKing} />
+          </RecapCard>
+        )}
+        {current === 8 && (
+          <RecapCard index={8} total={TOTAL_CARDS}>
             <Card5FirstSender firstSender={recap.firstSender} />
           </RecapCard>
         )}
