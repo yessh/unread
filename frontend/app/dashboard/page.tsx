@@ -8,7 +8,6 @@ import { MonthlyFrequencyChart } from '@/components/charts/MonthlyFrequencyChart
 import { ParticipantShareChart } from '@/components/charts/ParticipantShareChart'
 import { Badge } from '@/components/common/Badge'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
-import { ParticipantAnalysisSection } from '@/components/participants/ParticipantAnalysisSection'
 import { TimeRangeSlider } from '@/components/dashboard/TimeRangeSlider'
 import { ConversationTreeView } from '@/components/dashboard/ConversationTreeView'
 import { SummaryDigest } from '@/components/dashboard/SummaryDigest'
@@ -22,6 +21,7 @@ export default function DashboardPage() {
   const { parsedMessages, roomName, sessionId, summaryResult, summaryHours, summarizeTimeRange } = useAnalysis()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [embeddingDone, setEmbeddingDone] = useState(false)
 
   useEffect(() => {
     if (!parsedMessages) {
@@ -218,19 +218,8 @@ export default function DashboardPage() {
                 자연어로 원하는 대화를 찾아보세요.
               </p>
             </div>
-            {sessionId && <EmbeddingStatus sessionId={sessionId} />}
-            {sessionId && <VectorSearchBox sessionId={sessionId} />}
-          </div>
-
-          {/* 4. 참여자 성격 분석 */}
-          <div className="space-y-4">
-            <div>
-              <h2 className="text-2xl font-bold text-content-primary">참여자 성격 분석</h2>
-              <p className="mt-1 text-sm text-content-secondary">
-                분석할 참여자를 선택하세요. 선택할 때만 AI 분석을 요청합니다.
-              </p>
-            </div>
-            <ParticipantAnalysisSection parsedMessages={parsedMessages} />
+            {sessionId && <EmbeddingStatus sessionId={sessionId} onDone={() => setEmbeddingDone(true)} />}
+            {sessionId && <VectorSearchBox sessionId={sessionId} disabled={!embeddingDone} />}
           </div>
 
         </div>

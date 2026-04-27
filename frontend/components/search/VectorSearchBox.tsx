@@ -5,9 +5,10 @@ import { ragSearch, RagSearchResult } from '@/lib/api'
 
 interface VectorSearchBoxProps {
   sessionId: number
+  disabled?: boolean
 }
 
-export function VectorSearchBox({ sessionId }: VectorSearchBoxProps) {
+export function VectorSearchBox({ sessionId, disabled = false }: VectorSearchBoxProps) {
   const [query, setQuery] = useState('')
   const [result, setResult] = useState<RagSearchResult | null>(null)
   const [loading, setLoading] = useState(false)
@@ -15,7 +16,7 @@ export function VectorSearchBox({ sessionId }: VectorSearchBoxProps) {
   const [showSources, setShowSources] = useState(false)
 
   const handleSearch = async () => {
-    if (!query.trim()) return
+    if (!query.trim() || disabled) return
     setLoading(true)
     setError(null)
     setResult(null)
@@ -49,12 +50,13 @@ export function VectorSearchBox({ sessionId }: VectorSearchBoxProps) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-          placeholder="예: 갈등이 있었던 순간, 약속 잡은 대화, 서운했던 메시지..."
-          className="flex-1 rounded-xl bg-surface-elevated px-4 py-3 text-sm text-content-primary placeholder-content-muted outline-none focus:ring-2 focus:ring-accent-primary"
+          placeholder={disabled ? '인덱스를 먼저 생성해주세요' : '예: 갈등이 있었던 순간, 약속 잡은 대화, 서운했던 메시지...'}
+          disabled={disabled}
+          className="flex-1 rounded-xl bg-surface-elevated px-4 py-3 text-sm text-content-primary placeholder-content-muted outline-none focus:ring-2 focus:ring-accent-primary disabled:opacity-40"
         />
         <button
           onClick={handleSearch}
-          disabled={loading || !query.trim()}
+          disabled={disabled || loading || !query.trim()}
           className="rounded-xl bg-accent-primary px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-40"
         >
           {loading ? '분석 중...' : '검색'}

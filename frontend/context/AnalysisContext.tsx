@@ -4,7 +4,7 @@ import { createContext, useContext, useReducer, ReactNode, useCallback } from 'r
 import type { ConversationSummary, KeywordExtraction, KeywordTag, ParsedMessage, UploadState } from '@/lib/types'
 import { parseKakaoTxt } from '@/lib/parseKakaoTxt'
 import { parseCsv } from '@/lib/parseCsv'
-import { extractKeywords as extractKeywordsApi, summarizeConversation as summarizeApi, saveMessages as saveMessagesApi } from '@/lib/api'
+import { extractKeywords as extractKeywordsApi, summarizeConversation as summarizeApi, saveMessages as saveMessagesApi, getSessionMessages } from '@/lib/api'
 
 interface AnalysisState {
   parsedMessages: ParsedMessage[] | null
@@ -29,6 +29,7 @@ type AnalysisAction =
 
 interface AnalysisContextType extends AnalysisState {
   uploadFile: (file: File) => Promise<void>
+  loadSession: (sessionId: number, roomName: string) => Promise<void>
   summarizeLastHours: (hours: number) => Promise<void>
   summarizeTimeRange: (startTime: Date, endTime: Date) => Promise<void>
   addKeyword: (text: string) => void
@@ -136,6 +137,30 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  // 기존 세션 불러오기 (사이드바에서 선택 시)
+  const loadSession = useCallback(async (sessionId: number, roomName: string) => {
+    try {
+      dispatch({ type: 'SET_UPLOAD_STATE', payload: { status: 'uploading', progress: 50 } })
+      const rawMessages = await getSessionMessages(sessionId)
+      const messages: ParsedMessage[] = rawMessages.map(m => ({
+        sender: m.sender,
+        content: m.content,
+        timestamp: new Date(m.timestamp),
+      }))
+      dispatch({ type: 'SET_PARSED_MESSAGES', payload: { messages, roomName } })
+      dispatch({ type: 'SET_SESSION_ID', payload: sessionId })
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('parsedMessages', JSON.stringify(messages))
+        sessionStorage.setItem('roomName', roomName)
+        sessionStorage.setItem('sessionId', String(sessionId))
+      }
+      dispatch({ type: 'SET_UPLOAD_STATE', payload: { status: 'done', progress: 100 } })
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : '세션 로드 실패'
+      dispatch({ type: 'SET_UPLOAD_STATE', payload: { status: 'error', progress: 0, errorMessage } })
+    }
+  }, [])
+
   // 최근 N시간 대화 요약 요청
   const summarizeLastHours = useCallback(async (hours: number) => {
     if (!state.parsedMessages || !state.sessionId) return
@@ -223,8 +248,9 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
           payload: { messages, roomName: savedRoomName || 'Restored' },
         })
         const savedSessionId = sessionStorage.getItem('sessionId')
-        const sessionId = savedSessionId ? parseInt(savedSessionId, 10) : parseInt(process.env.NEXT_PUBLIC_MOCK_SESSION_ID || '1', 10)
-        dispatch({ type: 'SET_SESSION_ID', payload: sessionId })
+        if (savedSessionId) {
+          dispatch({ type: 'SET_SESSION_ID', payload: parseInt(savedSessionId, 10) })
+        }
       } catch {
         // 파싱 실패 시 무시
       }
@@ -234,6 +260,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
   const value: AnalysisContextType = {
     ...state,
     uploadFile,
+    loadSession,
     summarizeLastHours,
     summarizeTimeRange,
     addKeyword,

@@ -3,6 +3,7 @@ package com.kakao.chatsummary.config;
 import com.kakao.chatsummary.security.CustomOAuth2UserService;
 import com.kakao.chatsummary.security.JwtAuthenticationFilter;
 import com.kakao.chatsummary.security.OAuth2SuccessHandler;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -35,8 +36,15 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**", "/oauth2/**", "/login/**").permitAll()
-                .requestMatchers("/analysis/**", "/chat/**").permitAll()
-                .anyRequest().permitAll()
+                .requestMatchers("/analysis/**", "/chat/**").authenticated()
+                .anyRequest().authenticated()
+            )
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((request, response, authException) -> {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"error\":\"Unauthorized\"}");
+                })
             )
             .oauth2Login(oauth2 -> oauth2
                 .userInfoEndpoint(userInfo -> userInfo

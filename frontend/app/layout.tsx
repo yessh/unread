@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Navbar } from '@/components/common/Navbar'
+import { SessionSidebar } from '@/components/common/SessionSidebar'
 import { AnalysisProvider } from '@/context/AnalysisContext'
 import { AuthProvider } from '@/context/AuthContext'
 import './globals.css'
@@ -23,6 +24,7 @@ export default function RootLayout({
         <AuthProvider>
           <AnalysisProvider>
             <Navbar />
+            <SessionSidebar />
             {children}
           </AnalysisProvider>
         </AuthProvider>

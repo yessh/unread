@@ -13,7 +13,7 @@ export default function UploadPage() {
   useEffect(() => {
     if (uploadState.status === 'done' && parsedMessages) {
       const timer = setTimeout(() => {
-        router.push('/dashboard')
+        router.push('/recap')
       }, 500)
       return () => clearTimeout(timer)
     }

@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -36,13 +35,15 @@ public class EmbeddingService {
     private final Map<Long, EmbeddingProgress> progressMap = new ConcurrentHashMap<>();
 
     public EmbeddingProgress getProgress(Long sessionId) {
-        return progressMap.getOrDefault(sessionId, new EmbeddingProgress(EmbeddingStatus.IDLE, 0, 0));
-    }
+        EmbeddingProgress inMemory = progressMap.get(sessionId);
+        if (inMemory != null) return inMemory;
 
-    public void embedSessionMessagesBetween(Long sessionId, LocalDateTime startTime, LocalDateTime endTime) {
-        List<ChatMessage> messages = chatMessageRepository.findBySessionIdAndMessageTimeBetween(sessionId, startTime, endTime);
-        log.info("구간 임베딩 시작: sessionId={}, {}~{}, 메시지 수={}", sessionId, startTime, endTime, messages.size());
-        embedMessages(sessionId, messages);
+        // 서버 재시작 후에도 DB 기반으로 상태 복원
+        long total = chatMessageRepository.countBySessionId(sessionId);
+        long done = chatMessageRepository.countEmbeddedBySessionId(sessionId);
+        if (total == 0) return new EmbeddingProgress(EmbeddingStatus.IDLE, 0, 0);
+        if (done >= total) return new EmbeddingProgress(EmbeddingStatus.DONE, (int) total, (int) done);
+        return new EmbeddingProgress(EmbeddingStatus.IDLE, (int) total, (int) done);
     }
 
     public void embedSessionMessages(Long sessionId) {
